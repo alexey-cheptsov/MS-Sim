@@ -401,9 +401,9 @@ namespace G3_1 {
             communicator->add_comm_link(new CommLink("Pqmt1"/*snd_id*/, Ports_p::num_get_p,
                                                  "Q_AM_q"+to_string(N_AM-1)/*rcv_id*/, Ports_q::num_set_pend));
 
-            // Data Flow q->q (transport)
+            // Data Flow Qm->Qmt
             communicator->add_comm_link(new CommLink("Q_AM_qm"+to_string(N_AM-1)/*snd_id*/, Ports_qm::gas_get_qm,
-            					     "Q_VS_q0" /*snd_id*/, Ports_qmt::gas_set_qm));
+            					     "Q_VS_qmt0" /*snd_id*/, Ports_qmt::gas_set_qm));
     	};
 	
 	
@@ -534,6 +534,68 @@ namespace G3_1 {
             cout << out.str();
         }
 
+	virtual void command__set_Qm_AM() {
+    	    stringstream out;
+    	    
+    	    float value[N_AM];
+
+    	    // Receive value from Master
+    	    buffer_sync(Ports_QQmt::set_Qm_AM);
+
+            for (int i=0; i<N_AM; i++)
+    		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qm_AM, i/*index*/); // q[0..N]
+            buffer_clear(Ports_QQmt::set_Qm_AM);
+
+	    //
+            //Propagation to underlying Q's
+            //
+    	    out << "ms_" << id << "(" << id_str << "): Initialized qm_AM = {";
+            for (int i=0; i<N_AM; i++) {
+                out << value[i] << ", ";
+                add_proxy_value<float>(Proxies_AM::set_Qm, value[i] /*value*/);
+            }
+            proxy_flush_collective_replicate(Proxies_AM::set_Qm);
+            proxy_clear(Proxies_AM::set_Qm);
+
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::set_Qm /*value*/);
+            proxy_flush_collective_replicate(Proxies_AM::command_flow);
+            proxy_clear(Proxies_AM::command_flow);
+
+            out << "}" << endl;
+            cout << out.str();
+        }
+
+
+	virtual void command__set_Qm0_AM() {
+    	    stringstream out;
+    	    
+    	    float value[N_AM];
+
+    	    // Receive value from Master
+    	    buffer_sync(Ports_QQmt::set_Qm0_AM);
+
+            for (int i=0; i<N_AM; i++)
+    		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qm0_AM, i/*index*/); // q[0..N]
+            buffer_clear(Ports_QQmt::set_Qm0_AM);
+
+	    //
+            //Propagation to underlying Q's
+            //
+    	    out << "ms_" << id << "(" << id_str << "): Initialized qm0_AM = {";
+            for (int i=0; i<N_AM; i++) {
+                out << value[i] << ", ";
+                add_proxy_value<float>(Proxies_AM::set_Qm0, value[i] /*value*/);
+            }
+            proxy_flush_collective_replicate(Proxies_AM::set_Qm0);
+            proxy_clear(Proxies_AM::set_Qm0);
+
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::set_Qm0 /*value*/);
+            proxy_flush_collective_replicate(Proxies_AM::command_flow);
+            proxy_clear(Proxies_AM::command_flow);
+
+            out << "}" << endl;
+            cout << out.str();
+        }
 
 
         
@@ -777,9 +839,23 @@ namespace G3_1 {
                         break;
                     }
                     
+                    // 4
+                    case Commands_QQmt::set_Qm_AM: {
+                        command__set_Qm_AM();
+                        break;
+                    }
+                    
                     
                     // ...
                     
+                    // 8
+                    case Commands_QQmt::set_Qm0_AM: {
+                        command__set_Qm0_AM();
+                        break;
+                    }
+                    
+                    // ...
+        
                     
                     // 10
                     case Commands_QQmt::get_Q_OS: {

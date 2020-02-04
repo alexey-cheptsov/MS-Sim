@@ -105,7 +105,7 @@ namespace G1_1 {
         }
 
 
-	// Sending qm to the attached transport element
+	// Sending qm to the attached qmt-transport element
 	void send_qm() {
             add_buffer_value<float>(Ports_qm::gas_get_qm, flow_gas/*value*/);
             buffer_flush_collective_gather(Ports_qm::gas_get_qm);
@@ -197,6 +197,8 @@ namespace G1_1 {
             int nr_steps = air->solver->nr_num_steps;
             
             while (counter<nr_steps) {
+        	send_qm();
+        	
                 air->simulation_q();
                 simulation_qm();
             
@@ -326,8 +328,7 @@ namespace G1_1 {
 	}
 		
     }; // class qm
-
-
+    
 }; // namespace G1_1
 
 

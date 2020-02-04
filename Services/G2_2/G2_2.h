@@ -207,7 +207,7 @@ namespace G2_2 {
 	                                             id_str + "_q"+to_string(i)/*rcv_id*/,  Ports_q::num_set_pend));
             }  
             
-            // Data Flow q->q (transport)
+            // Data Flow qmt->qmt (transport)
             for (int i=0; i<N-1; i++) {
                 communicator->add_comm_link(new CommLink(id_str + "_qmt"+to_string(i)/*snd_id*/, Ports_qmt::gas_get_qm,
             						id_str + "_qmt"+to_string(i+1)/*snd_id*/, Ports_qmt::gas_set_qm));

@@ -358,81 +358,81 @@ public:
 
     void add_entry(string net, string sec, string elem, string name, string timestamp, float value)
     {
-	    if (fout_1 == nullptr){
-		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
-		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "\"" << ":" << value << "}" << endl;
-		    string s = ss.str();
-		    json_msg = new char [s.length()+1];
-		    strcpy (json_msg, s.c_str());
-	    }
-	    else{
+//	    if (fout_1 == nullptr){
+//		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
+//		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "\"" << ":" << value << "}" << endl;
+//		    string s = ss.str();
+//		    json_msg = new char [s.length()+1];
+//		    strcpy (json_msg, s.c_str());
+//	    }
+//	    else{
 		    ss << "\"" << experiment_id << "\"" << ";" << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value << endl;
 		    //*fout_1 << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value << endl;
-	    }
-	    counter++;
-	    if (counter == buffer)
-		    {
-			    if (fout_1 == nullptr) {
-				    publish_json(convert_comand(bulk), json_msg);
-			    }
-			    else{
+//	    }
+//	    counter++;
+//	    if (counter == buffer)
+//		    {
+//			    if (fout_1 == nullptr) {
+//				    publish_json(convert_comand(bulk), json_msg);
+//			    }
+//			    else{
 				    *fout_1 << ss.str();
-			    }
+//			    }
 	    ss.str("");
-	    counter = 0;
-	    }
+//	    counter = 0;
+//	    }
 	    
     }
 
     void add_entry(string net, string sec, string elem, string name, string timestamp, float value_1, float value_2)
     {
 
-	    if ((fout_1 == nullptr) && (fout_2 == nullptr)){
-		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
-		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "\"" << ":" << value_1 << "}" << endl;
-		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
-		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "_gas" << "\"" << ":" << value_2 << "}" << endl;
-		    string s = ss.str();
-		    json_msg = new char [s.length()+1];
-		    strcpy (json_msg, s.c_str());
-	    }
-	    else{
+//	    if ((fout_1 == nullptr) && (fout_2 == nullptr)){
+//		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
+//		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "\"" << ":" << value_1 << "}" << endl;
+//		    ss << "{" << "\"" << "index" << "\"" << ":{" <<  "\"" << "_index" "\"" << ":" << "\"" << "ms" << "\"" << "," <<  "\"" << "_type" << "\"" << ":" << "\"" << "_doc" << "\""<< "} }" << endl;
+//		    ss << "{" << "\"" << "ExperimentID" << "\"" << ":" << "\"" << experiment_id << "\"" << "," << "\"" << "Network" << "\"" << ":" << "\"" << net << "\"" << "," << "\"" << "Section" << "\"" << ":" << "\"" << sec << "\"" << "," << "\"" << "Element" << "\"" << ":" << "\"" << elem << "\"" << "," << "\"" << "@timestamp" << "\"" << ":" << "\"" << timestamp << "\"" << "," << "\"" << name << "_gas" << "\"" << ":" << value_2 << "}" << endl;
+//		    string s = ss.str();
+//		    json_msg = new char [s.length()+1];
+//		    strcpy (json_msg, s.c_str());
+//	    }
+//	    else{
 		    ss << "\"" << experiment_id << "\"" << ";" << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value_1 << endl;
 		    ssg << "\"" << experiment_id << "\"" << ";" << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value_2 << endl;
-	    }
-	    counter++;
-	    if (counter == buffer)
-	    {
-			    if (fout_1 == nullptr) {
-				    publish_json(convert_comand(bulk), json_msg);
-			    }
-			    else{
+//	    }
+//	    counter++;
+//	    if (counter == buffer)
+//	    {
+//			    if (fout_1 == nullptr) {
+//				    publish_json(convert_comand(bulk), json_msg);
+//			    }
+//			    else{
 				    *fout_1 << ss.str();
 				    *fout_2 << ssg.str();	
-			    }
+//			    }
 	    ss.str("");
 	    ssg.str("");
-	    counter = 0;
-	    }
+//	    counter = 0;
+//	    }
     }
 
 
     void data_flush(string id_str)
     {
-	int count_lines=0;
-	int i;
-	char c;
-	char labels[30][100];
-	char values[30][100];
-	char j_msg[512];
-	int fcounter=0;
-	int num_label=0;
-	int num_char=0;
-
-        if (mon_opts->flag_output_uri) {
-	    publish_json(convert_comand(bulk), json_msg);
-	} 
-	else {
+//	int count_lines=0;
+//	int i;
+//	char c;
+//	char labels[30][100];
+//	char values[30][100];
+//	char j_msg[512];
+//	int fcounter=0;
+//	int num_label=0;
+//	int num_char=0;
+//
+//        if (mon_opts->flag_output_uri) {
+//	    publish_json(convert_comand(bulk), json_msg);
+//	} 
+//	else {
 	    if (fout_2 == nullptr) {
 	        *fout_1 << ss.str() << endl;		
 	    } else {
@@ -440,67 +440,67 @@ public:
 	        *fout_2 << ssg.str() << endl;
 	    }
 
-	    string full_path = "./output/";
-	    full_path.append(id_str);
-	    full_path.append(".csv");
-	    ifstream infile(full_path);
-	
-	    while ((c = infile.get()) != EOF) {
+//	    string full_path = "./output/";
+//	    full_path.append(id_str);
+//	    full_path.append(".csv");
+//	    ifstream infile(full_path);
+//	
+//	    while ((c = infile.get()) != EOF) {
 				    
-		if(( fcounter ==0))  {
-		    if (  (c==';' || c=='\n')) {
-			num_label++;
-			num_char=0;
-			labels[num_label][num_char]='\0';
-		    }
-	    
-		    if ((c!=';')&& (c!=10)) {
-		        labels[num_label][num_char]=c;
-		        labels[num_label][num_char+1]='\0';
-		        num_char=num_char+1;
-		    }
+//		if(( fcounter ==0))  {
+//		    if (  (c==';' || c=='\n')) {
+//			num_label++;
+//			num_char=0;
+//			labels[num_label][num_char]='\0';
+//		    }
+//	    
+//		    if ((c!=';')&& (c!=10)) {
+//		        labels[num_label][num_char]=c;
+//		        labels[num_label][num_char+1]='\0';
+//		        num_char=num_char+1;
+//		    }
 		
-		    if(c=='\n') {
-		        fcounter ++;
-		        num_label=0;
-		        num_char=0;
-		        values[num_label][num_char]='\0';
-		    }
-		} else {
-		    if ((c==';' || c=='\n')){
-		        num_label++;
-		        num_char=0;
-		        values[num_label][num_char]='\0';
-		    }
-		
-		    if( (c!=';') && (c!=10)){
-		        values[num_label][num_char]=c;
-		        values[num_label][num_char+1]='\0';
-		        num_char=num_char+1;
-		    }
-		    
-		    if(c=='\n') {
-		        sprintf(j_msg,"{");
-		    
-		        for(i=0;i<num_label;i++) {
-			    if(i>0) sprintf(j_msg,"%s,",j_msg);
-			    sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
-		        }
-		
-		        sprintf(j_msg,"%s}\n",j_msg);
+//		    if(c=='\n') {
+//		        fcounter ++;
+//		        num_label=0;
+//		        num_char=0;
+//		        values[num_label][num_char]='\0';
+//		    }
+//		} else {
+//		    if ((c==';' || c=='\n')){
+//		        num_label++;
+//		        num_char=0;
+//		        values[num_label][num_char]='\0';
+//		    }
+//		
+//		    if( (c!=';') && (c!=10)){
+//		        values[num_label][num_char]=c;
+//		        values[num_label][num_char+1]='\0';
+//		        num_char=num_char+1;
+//		    }
+//		    
+//		    if(c=='\n') {
+//		        sprintf(j_msg,"{");
+//		    
+//		        for(i=0;i<num_label;i++) {
+//			    if(i>0) sprintf(j_msg,"%s,",j_msg);
+//			    sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
+//		        }
+//		
+//		        sprintf(j_msg,"%s}\n",j_msg);
 	     		//printf(" msg is %s",j_msg);		
 					    
-			if (uri!=nullptr)
-				publish_json(convert_comand(post), j_msg);
+//			if (uri!=nullptr)
+//				publish_json(convert_comand(post), j_msg);
 				    
-			num_label=0;
-			count_lines++;
-		    }
-		}
-	    } 
+//			num_label=0;
+//			count_lines++;
+//		    }
+//		}
+//	    } 
 	
-	    infile.close();
-	}
+//	    infile.close();
+//	}
     }
 		
 

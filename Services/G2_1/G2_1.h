@@ -117,6 +117,7 @@ namespace G2_1 {
 	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 7 /*port*/, qq[i]->communicator));
     	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 8 /*port*/, qq[i]->communicator));
 	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 9 /*port*/, qq[i]->communicator));
+	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 10/*port*/, qq[i]->communicator));
             }
 
 	    for (int i=0; i<N-1; i++) {

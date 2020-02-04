@@ -29,6 +29,8 @@ public:
     float H_start; // pressures
     float H_end;
     
+    float Qm0;
+    
     int N_OS;
     int N_Streb;
     int N_AM;
@@ -44,7 +46,7 @@ public:
                         
     Element_model(int id_, string id_str_, MpiCommunicator* communicator_,
                 string section_, string network_,
-                float H_start_, float H_end_,
+                float H_start_, float H_end_, float Qm0_,
                 Monitoring_opts* mon_opts_,
     /*OS*/      float OS_S_,    float OS_R_,    float OS_L_,
     /*Streb*/   float Streb_S_, float Streb_R_, float Streb_L_,
@@ -61,6 +63,8 @@ public:
 	
 	H_start = H_start_;
 	H_end = H_end_;
+	
+	Qm0 = Qm0_;
 	
         // Setup of communication map
         set_communications();
@@ -268,6 +272,7 @@ public:
 						 
         communicator->add_comm_link(new CommLink("P1"/*snd_id*/, Ports_p::num_get_p, 
 						 "Q_VS_q"+to_string(N_VS-1)/*rcv_id*/, Ports_q::num_set_pend));
+						 
     }                
                 
     // sets value of all q-approx_elements
@@ -334,6 +339,38 @@ public:
 	proxy_clear(Ports_QQmt::command_flow);
     }
 
+    // sets value of all q-approx_elements
+    void set_Qm_AM(float* values /*[n]*/) {
+	// preparation of buffer
+	proxy_clear(Ports_QQmt::set_Qm_AM);
+	
+	for (int i=0; i<N_AM; i++) {
+	    add_proxy_value<float>(Ports_QQmt::set_Qm_AM, values[i]);
+	}
+	proxy_flush_collective_spread(Ports_QQmt::set_Qm_AM);
+	proxy_clear(Ports_QQmt::set_Qm_AM);
+	
+	add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::set_Qm_AM);
+	proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+	proxy_clear(Ports_QQmt::command_flow);
+    }
+
+    // sets value of all q-approx_elements
+    void set_Qm0_AM(float* values /*[n]*/) {
+	// preparation of buffer
+	proxy_clear(Ports_QQmt::set_Qm0_AM);
+	
+	for (int i=0; i<N_AM; i++) {
+	    add_proxy_value<float>(Ports_QQmt::set_Qm0_AM, values[i]);
+	}
+	proxy_flush_collective_spread(Ports_QQmt::set_Qm0_AM);
+	proxy_clear(Ports_QQmt::set_Qm0_AM);
+	
+	add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::set_Qm0_AM);
+	proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+	proxy_clear(Ports_QQmt::command_flow);
+    }
+    
 
 
     // sets p of all P_element
@@ -363,7 +400,7 @@ public:
 	    values[i] = get_proxy_value<float>(proxy_disp_p + Ports_p::get_p, i);    
     }
     
-        // sets value of all q-approx_elements
+    // sets value of all q-approx_elements
     void get_Q_OS(float* values /*[n]*/) {
         proxy_clear(Ports_QQmt::get_Q_OS);
 
@@ -416,6 +453,8 @@ public:
 	float q_VS_old[N_VS];
 	float qm_AM_old[N_AM];
 	float qm_VS_old[N_VS];
+	
+	float qm0_AM[N_AM];
 
 
 	float P[2];
@@ -432,18 +471,24 @@ public:
 	}
 	set_Q_OS(q_OS);
 	
-	for (int i=0; i<N_Streb; i++) 
+	for (int i=0; i<N_Streb; i++) {
 	    q_Streb[i] = 0;
+	    
+	    q_Streb_old[i] = 0;
+	}
 	set_Q_Streb(q_Streb);
 		
 	for (int i=0; i<N_AM; i++) {
 	    q_AM[i] = 0;
-	    qm_AM[i] = 0;
+	    qm_AM[i] = Qm0;
+	    qm0_AM[i] = Qm0;
 	    
 	    q_AM_old[i] = 0;
 	    qm_AM_old[i] = 0;
 	}
 	set_Q_AM(q_AM);
+	set_Qm_AM(qm_AM);
+	set_Qm0_AM(qm0_AM);
 	
 	for (int i=0; i<N_VS; i++) {
 	    q_VS[i] = 0;
@@ -461,7 +506,7 @@ public:
 	init_time();
 
 	// Simulation
-	for (int i=0; i<500; i++) {
+	for (int i=0; i<1000; i++) {
 //	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
@@ -541,7 +586,7 @@ int main (int argc, char* argv[]) {
     // numeric parameters
     Solver_Params solv_params = { 0.15        /*time step in s.*/,
                                   0.0001      /*precision*/,
-                                  1           /*nr. of numeric steps in sim block*/  };
+                                  30          /*nr. of numeric steps in sim block*/  };
     
     // Deployment options
     MpiProcessMap mpi_map;
@@ -647,12 +692,12 @@ int main (int argc, char* argv[]) {
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = experiment_id;
     mon_opts->flag_output_file  = 1;
-    mon_opts->buf_size 		= 10;
+    mon_opts->buf_size 		= 1;
 
     Element_model* model_G3_1 = new Element_model(
 	    0, "G3_1", communicator,
 	    "Section1" /*section*/, "Network1" /*network*/,
-	    H_start, H_end,
+	    H_start, H_end, AM_Qm0,
             mon_opts,
 /*OS*/      OS_S, OS_R, OS_L,
 /*Streb*/   Streb_S, Streb_R, Streb_L,

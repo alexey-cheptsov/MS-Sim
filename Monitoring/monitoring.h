@@ -29,10 +29,11 @@ using namespace std;
 class Monitoring_opts {
 public:
     string experiment_id 	= "2019-01-01T00:00:00.000";
-    bool flag_output_file 	= 1;
+    bool flag_output_file 	= 0;
+    bool flag_output_display	= 0;
     bool flag_output_uri 	= 0;
     
-    int buf_size		= 10;
+    int buf_size		= 0;
     
     string uri			= "http://localhost:9200/ms/";    
 };
@@ -48,6 +49,9 @@ public:
     /*******************************************************************************
     * Variables Declarations
     ******************************************************************************/
+    
+    Monitoring_opts* mon_opts = nullptr;
+    
     struct curl_slist *headers = NULL;
 
     struct url_data {
@@ -75,9 +79,10 @@ public:
     int buffer;
 
     Monitoring(Monitoring_opts* mon_opts_) {
+	mon_opts = mon_opts_;
+    
 	// FOR EXAMPLE: if ((mon_opts_->flag_output_file) && (mon_opts_->flag_output_file)) 
 	experiment_id = mon_opts_->experiment_id;
-	uri = nullptr;
     }
 
     Monitoring() {
@@ -85,17 +90,11 @@ public:
 	    username = "admin";
 	    password = "admin";
 
-	    fout_1 = nullptr;
-	    fout_2 = nullptr;
-
 	    experiment_id = "2019-01-01T00:00:00.000";
     };
 
     Monitoring(string experiment_id_, char* uri_) {
 	    uri = uri_;
-
-	    fout_1 = nullptr;
-	    fout_2 = nullptr;
 
 	    experiment_id = experiment_id_;
     };
@@ -105,9 +104,6 @@ public:
 	    uri = uri_;
 	    username = username_;
 	    password = password_;
-
-	    fout_1 = nullptr;
-	    fout_2 = nullptr;
 
 	    experiment_id = experiment_id_;
     };
@@ -123,10 +119,6 @@ public:
 
     Monitoring(string experiment_id_, fstream *fout_1_, fstream *fout_2_)
     {
-            uri = nullptr;
-	    fout_1 = fout_1_;
-	    fout_2 = fout_2_;
-
 	    experiment_id = experiment_id_;
     }
 
@@ -437,7 +429,7 @@ public:
 	int num_label=0;
 	int num_char=0;
 
-        if (fout_1 == nullptr) {
+        if (mon_opts->flag_output_uri) {
 	    publish_json(convert_comand(bulk), json_msg);
 	} 
 	else {

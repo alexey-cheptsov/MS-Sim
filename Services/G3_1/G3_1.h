@@ -526,7 +526,7 @@ namespace G3_1 {
             proxy_flush_collective_replicate(Proxies_VS::set_Q);
             proxy_clear(Proxies_VS::set_Q);
 
-            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Q::set_Q /*value*/);
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Qmt::set_Q /*value*/);
             proxy_flush_collective_replicate(Proxies_VS::command_flow);
             proxy_clear(Proxies_VS::command_flow);
 
@@ -597,6 +597,36 @@ namespace G3_1 {
             cout << out.str();
         }
 
+	virtual void command__set_Qms_VS() {
+    	    stringstream out;
+    	    
+    	    float value[N_VS];
+
+    	    // Receive value from Master
+    	    buffer_sync(Ports_QQmt::set_Qms_VS);
+
+            for (int i=0; i<N_VS; i++)
+    		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qms_VS, i/*index*/); // q[0..N]
+            buffer_clear(Ports_QQmt::set_Qms_VS);
+
+	    //
+            //Propagation to underlying Q's
+            //
+    	    out << "ms_" << id << "(" << id_str << "): Initialized qms_VS = {";
+            for (int i=0; i<N_VS; i++) {
+                out << value[i] << ", ";
+                add_proxy_value<float>(Proxies_VS::set_Qms, value[i] /*value*/);
+            }
+            proxy_flush_collective_replicate(Proxies_VS::set_Qms);
+            proxy_clear(Proxies_VS::set_Qms);
+
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Qmt::set_Qms /*value*/);
+            proxy_flush_collective_replicate(Proxies_VS::command_flow);
+            proxy_clear(Proxies_VS::command_flow);
+
+            out << "}" << endl;
+            cout << out.str();
+        }
 
         
         virtual void command__get_Q_OS() {
@@ -649,7 +679,7 @@ namespace G3_1 {
     	    float value[N_AM];
     	    
     	    // Receive value from underlying q's
-            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Q::get_Q /*value*/);
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::get_Q /*value*/);
             proxy_flush_collective_replicate(Proxies_AM::command_flow);
             proxy_clear(Proxies_AM::command_flow);
 
@@ -671,7 +701,7 @@ namespace G3_1 {
     	    float value[N_VS];
     	    
     	    // Receive value from underlying q's
-            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Q::get_Q /*value*/);
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Qmt::get_Q /*value*/);
             proxy_flush_collective_replicate(Proxies_VS::command_flow);
             proxy_clear(Proxies_VS::command_flow);
 
@@ -685,6 +715,28 @@ namespace G3_1 {
                 add_buffer_value<float>(Ports_QQmt::get_Q_VS, value[i] /*value*/);
             buffer_flush_collective_gather(Ports_QQmt::get_Q_VS);
             buffer_clear(Ports_QQmt::get_Q_VS);
+        }
+
+        virtual void command__get_Qm_AM() {
+    	    stringstream out;
+    	    
+    	    float value[N_AM];
+    	    
+    	    // Receive value from underlying q's
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::get_Qm /*value*/);
+            proxy_flush_collective_replicate(Proxies_AM::command_flow);
+            proxy_clear(Proxies_AM::command_flow);
+
+            proxy_sync(Proxies_AM::get_Qm);
+            for (int i=0; i<N_AM; i++)
+                value[i] = get_proxy_value<float>(Proxies_AM::get_Qm, i /*index*/);
+            proxy_clear(Proxies_AM::get_Qm);
+
+    	    // Sending to Master
+            for (int i=0; i<N_AM; i++)
+                add_buffer_value<float>(Ports_QQmt::get_Qm_AM, value[i] /*value*/);
+            buffer_flush_collective_gather(Ports_QQmt::get_Qm_AM);
+            buffer_clear(Ports_QQmt::get_Qm_AM);
         }
 
 
@@ -848,6 +900,12 @@ namespace G3_1 {
                     
                     // ...
                     
+                    // 7
+                    case Commands_QQmt::set_Qms_VS: {
+                        command__set_Qms_VS();
+                        break;
+                    }
+                    
                     // 8
                     case Commands_QQmt::set_Qm0_AM: {
                         command__set_Qm0_AM();
@@ -878,6 +936,12 @@ namespace G3_1 {
                     // 13
                     case Commands_QQmt::get_Q_VS: {
                         command__get_Q_VS();
+                        break;
+                    }
+                    
+                    // 14
+                    case Commands_QQmt::get_Qm_AM: {
+                        command__get_Qm_AM();
                         break;
                     }
                     

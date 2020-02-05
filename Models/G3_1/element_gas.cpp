@@ -30,6 +30,7 @@ public:
     float H_end;
     
     float Qm0;
+    Solver_Params solv_params;
     
     int N_OS;
     int N_Streb;
@@ -65,6 +66,7 @@ public:
 	H_end = H_end_;
 	
 	Qm0 = Qm0_;
+	solv_params = solv_params_;
 	
         // Setup of communication map
         set_communications();
@@ -354,6 +356,22 @@ public:
 	proxy_flush_collective_replicate(Ports_QQmt::command_flow);
 	proxy_clear(Ports_QQmt::command_flow);
     }
+    
+    // sets value of all q-approx_elements
+    void set_Qms_VS(float* values /*[n]*/) {
+	// preparation of buffer
+	proxy_clear(Ports_QQmt::set_Qms_VS);
+	
+	for (int i=0; i<N_VS; i++) {
+	    add_proxy_value<float>(Ports_QQmt::set_Qms_VS, values[i]);
+	}
+	proxy_flush_collective_spread(Ports_QQmt::set_Qms_VS);
+	proxy_clear(Ports_QQmt::set_Qms_VS);
+	
+	add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::set_Qms_VS);
+	proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+	proxy_clear(Ports_QQmt::command_flow);
+    }
 
     // sets value of all q-approx_elements
     void set_Qm0_AM(float* values /*[n]*/) {
@@ -371,8 +389,6 @@ public:
 	proxy_clear(Ports_QQmt::command_flow);
     }
     
-
-
     // sets p of all P_element
     void set_P(float* values  /*[2]*/) {
 	proxy_clear(proxy_disp_p + Ports_p::set_p);
@@ -400,7 +416,7 @@ public:
 	    values[i] = get_proxy_value<float>(proxy_disp_p + Ports_p::get_p, i);    
     }
     
-    // sets value of all q-approx_elements
+    // gets value of all q-approx_elements
     void get_Q_OS(float* values /*[n]*/) {
         proxy_clear(Ports_QQmt::get_Q_OS);
 
@@ -414,6 +430,34 @@ public:
         proxy_clear(Ports_QQmt::get_Q_OS);
     }
 
+
+    // gets value of all q-approx_elements
+    void get_Q_VS(float* values /*[n]*/) {
+        proxy_clear(Ports_QQmt::get_Q_VS);
+
+        add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::get_Q_VS);
+        proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+        proxy_clear(Ports_QQmt::command_flow);
+    
+        proxy_sync(Ports_QQmt::get_Q_VS);
+        for (int i=0; i<N_VS; i++)
+            values[i] = get_proxy_value<float>(Ports_QQmt::get_Q_VS, i);
+        proxy_clear(Ports_QQmt::get_Q_VS);
+    }
+
+    // gets value of all q-approx_elements
+    void get_Qm_AM(float* values /*[n]*/) {
+        proxy_clear(Ports_QQmt::get_Qm_AM);
+
+        add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::get_Qm_AM);
+        proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+        proxy_clear(Ports_QQmt::command_flow);
+    
+        proxy_sync(Ports_QQmt::get_Qm_AM);
+        for (int i=0; i<N_AM; i++)
+            values[i] = get_proxy_value<float>(Ports_QQmt::get_Qm_AM, i);
+        proxy_clear(Ports_QQmt::get_Qm_AM);
+    }
 
     // inits time stamp for all ms
     void init_time() {
@@ -446,6 +490,7 @@ public:
 	float q_VS[N_VS];
 	float qm_AM[N_AM];
 	float qm_VS[N_VS];
+	float qms_VS[N_VS];
 	
 	float q_OS_old[N_OS];
 	float q_Streb_old[N_Streb];
@@ -493,11 +538,14 @@ public:
 	for (int i=0; i<N_VS; i++) {
 	    q_VS[i] = 0;
 	    qm_VS[i] = 0;
+	    qms_VS[i] = 0;
 	    
 	    q_VS_old[i] = 0;
 	    qm_VS_old[i] = 0;
 	}
+	qms_VS[0] = 0.1;
 	set_Q_VS(q_VS);
+	set_Qms_VS(qms_VS);
 	
 
 	bool is_converged = false;
@@ -506,29 +554,26 @@ public:
 	init_time();
 
 	// Simulation
-	for (int i=0; i<1000; i++) {
-//	while ( !is_converged ) {
+	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
     	    num_step++;
 	    
-    	    get_Q_OS(q_OS);
-//    	    get_Qm(q);
+    	    get_Q_VS(q_VS);
+    	    get_Qm_AM(qm_AM);
 
-//	    float cur_mod_time = solv_params.nr_num_steps * num_step * solv_params.time_step;
+    	    is_converged = true;
+    	    
+    	    if (fabs(q_VS[0]-q_VS_old[0]) > solv_params.precision)
+                is_converged = false;
+            else if (fabs(qm_AM[0]-qm_AM_old[0]) > solv_params.precision)
+                is_converged = false;
+            	
+    	    q_VS_old[0] = q_VS[0];
+    	    qm_AM_old[0] = qm_AM[0];
+    	    
 
-//    	    is_converged = true;
-//   	    for (int i=0; i<n; i++) {
-//        	if (fabs(q[i]-q_old[i]) > solv_params.precision)
-//            	    is_converged = false;
-            	
-//            	if (fabs(qm[i]-qm_old[i]) > solv_params.precision)
-//                    is_converged = false;
-            	
-//        	q_old[i] = q[i];
-//        	qm_old[i] = qm[i];
-//    	    }
 	}
 
 	// Stopping the worker-ms

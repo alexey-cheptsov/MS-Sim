@@ -232,8 +232,11 @@ namespace G1_1 {
 	}
 	
 	virtual void command__stop() {
-	    if (monitoring != nullptr)
+	    if (monitoring != nullptr) {
 		monitoring->data_flush(id_str);
+		output_air->close();
+		output_gas->close();
+	    }
 	    
 	
 	    stringstream out;

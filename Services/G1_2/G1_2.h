@@ -246,8 +246,11 @@ namespace G1_2 {
 	}
 	
 	virtual void command__stop() {
-	    if (monitoring != nullptr)
+	    if (monitoring != nullptr) {
 		monitoring->data_flush(id_str);
+		output_air->close();
+		output_gas->close();		
+	    }
 	
 	    stringstream out;
     	    out << "ms_" << id << "(" << id_str << "): Received stop. Terminating" << endl;

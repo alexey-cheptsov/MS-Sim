@@ -308,8 +308,10 @@ namespace A1_1 {
 	}
 	
 	virtual void command__stop() {
-	    if (monitoring != nullptr)
+	    if (monitoring != nullptr) {
 		monitoring->data_flush(id_str);
+		output->close();	
+	    }
 	
 	    stringstream out;
     	    out << "ms_" << id << "(" << id_str << "): Received stop. Terminating" << endl;

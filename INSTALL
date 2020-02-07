@@ -1,0 +1,45 @@
+1. Скачать код с Github-репозитория.
+
+Для этого:
+
+- создать папку, где код будет лежать.
+
+- зайти с командной строки в эту папку
+
+- скачать актуальную версию при помощи команды:
+
+    "git clone git@github.com:alexey-cheptsov/MS-Sim.git"
+
+2. Установить OpenMPI
+
+- cоздать папку, где будет находится OpenMPI, например
+
+    mkdir /home/.../OpenMPI
+
+    cd /home/.../OpenMPI
+
+   - скачать код при помощи команды:
+
+    "wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.2.tar.gz"
+
+  - распаковать всё
+
+    "tar xzf openmpi-4.0.2.tar.gz"
+
+- сконфигурировать
+
+    "./configure --prefix=`pwd`/bin"
+
+- откомпилить
+
+    "make; make install"
+
+3. Установить переменную среды, указывающую на путь к OpenMPI
+
+    "export OPEN_MPI_PATH=/home/.../OpenMPI"
+
+4. Запустить простой тест
+
+    "cd /home/.../MS-Sim/Models"
+
+    "./compile.sh; ./run.sh"

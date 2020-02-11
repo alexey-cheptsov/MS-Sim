@@ -48,7 +48,7 @@ public:
         
     template<typename T>
     void add_buffer_value(int port, T value) {
-	if (buffers.size()<port)
+	if (port < buffers.size())
             buffers[port]->add_value(value);
         else {
             stringstream out;

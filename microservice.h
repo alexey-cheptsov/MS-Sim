@@ -48,7 +48,14 @@ public:
         
     template<typename T>
     void add_buffer_value(int port, T value) {
-	buffers[port]->add_value(value);
+	if (buffers.size()<port)
+            buffers[port]->add_value(value);
+        else {
+            stringstream out;
+            out << id_str << ": Adding new element to buffer " << port << " failed. Port not available. Execution stopped" << endl;
+            cout << out.str();
+            exit(1);
+        }
     };
     
     template<typename T>

@@ -67,6 +67,7 @@ namespace A1_1 {
 	// Monitoring properties
 	Time_MS time_ms;
 	Monitoring* monitoring = nullptr;
+	Monitoring_opts* mon_opts;
 	fstream* output = nullptr; 	// output file for q
 	
 	// Constants
@@ -117,8 +118,8 @@ namespace A1_1 {
             section = section_;
             network = network_;
             
+            mon_opts = mon_opts_;
 	    monitoring = new Monitoring(mon_opts_);
-            init_monitoring(mon_opts_);
 	};
 	
 	void init_solver(Solver_Params params) {
@@ -126,14 +127,15 @@ namespace A1_1 {
             solver = rk4;
 	};
 	
-	void init_monitoring(Monitoring_opts* mon_opts) {
-	    if (mon_opts->flag_output_file) {
-        	output = new fstream();
-        	monitoring->fout_1 = output;
+	void init_monitoring() {
+	    if (monitoring != nullptr) {
+		if (mon_opts->flag_output_file) {
+        	    output = new fstream();
+        	    monitoring->fout_1 = output;
         	
-                output->open("output/" + id_str + ".csv", ios::out);
-
-	        *output << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
+            	    output->open("output/" + id_str + ".csv", ios::out);
+	    	    *output << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
+		}
     	    }
 	}
     
@@ -310,7 +312,9 @@ namespace A1_1 {
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
 		monitoring->data_flush(id_str);
-		output->close();	
+		
+		if (mon_opts->flag_output_file)
+		    output->close();	
 	    }
 	
 	    stringstream out;
@@ -330,6 +334,8 @@ namespace A1_1 {
 	}
 	
 	void run() {
+	    init_monitoring();
+	
 	    bool finish = false;
 	    
 	    while (!finish) {

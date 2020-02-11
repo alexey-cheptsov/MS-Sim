@@ -55,6 +55,7 @@ namespace G1_1 {
         
         // Monitoring properties
         Monitoring* monitoring = nullptr;
+        Monitoring_opts* mon_opts;
         fstream* output_air = nullptr;      // output file for q
         fstream* output_gas = nullptr;      // output file for qm
         
@@ -84,23 +85,24 @@ namespace G1_1 {
             air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 8 /*port*/, communicator));
             air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
 
-            
+            mon_opts = mon_opts_;
             monitoring = new Monitoring(mon_opts_);
-            init_monitoring(mon_opts_);
         };
         
-        void init_monitoring(Monitoring_opts* mon_opts) {
-            if (mon_opts->flag_output_file) {
-                output_air = new fstream();
-                output_gas = new fstream();
-                monitoring->fout_1 = output_air;
-                monitoring->fout_2 = output_gas;
+        void init_monitoring() {
+    	    if (monitoring != nullptr) {
+        	if (mon_opts->flag_output_file) {
+            	    output_air = new fstream();
+            	    output_gas = new fstream();
+            	    monitoring->fout_1 = output_air;
+            	    monitoring->fout_2 = output_gas;
                 
-                output_air->open("output/" + id_str + "_air.csv", ios::out);
-                output_gas->open("output/" + id_str + "_gas.csv", ios::out);
+            	    output_air->open("output/" + id_str + "_air.csv", ios::out);
+            	    output_gas->open("output/" + id_str + "_gas.csv", ios::out);
 
-                *output_air << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
-                *output_gas << "ExperimentID;Network;Section;Element;@timestamp;qm" << endl;
+            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
+            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;qm" << endl;
+            	}
             }   
         }
 
@@ -234,11 +236,13 @@ namespace G1_1 {
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
 		monitoring->data_flush(id_str);
-		output_air->close();
-		output_gas->close();
+		
+		if (mon_opts->flag_output_file) {
+		    output_air->close();
+		    output_gas->close();
+		}
 	    }
 	    
-	
 	    stringstream out;
     	    out << "ms_" << id << "(" << id_str << "): Received stop. Terminating" << endl;
     	    cout << out.str();
@@ -256,6 +260,8 @@ namespace G1_1 {
 	}
 	
 	void run() {
+	    init_monitoring();
+	
 	    bool finish = false;
 	    
 	    while (!finish) {

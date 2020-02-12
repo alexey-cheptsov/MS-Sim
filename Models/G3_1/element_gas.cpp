@@ -722,7 +722,7 @@ int main (int argc, char* argv[]) {
 
     MpiCommunicator* communicator = new MpiCommunicator(mpi_map);
 
-    char experiment_id_char[23];
+    char experiment_id_char[23+1];
     if (mpi_rank == 0) {
 	Time_MS now;
         now.init_time();
@@ -730,7 +730,7 @@ int main (int argc, char* argv[]) {
 	cout << "Experiment_id: " << experiment_id << endl;
 	strcpy(experiment_id_char, experiment_id.c_str());
     }
-    MPI_Bcast(experiment_id_char, 23, MPI_CHAR, 0, MPI_COMM_WORLD);
+    MPI_Bcast(experiment_id_char, 24, MPI_CHAR, 0, MPI_COMM_WORLD);
 
     string experiment_id(experiment_id_char);
     

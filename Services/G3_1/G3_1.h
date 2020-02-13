@@ -53,7 +53,7 @@ namespace G3_1 {
 		Monitoring_opts* mon_opts_,
     /*OS*/	float OS_S_,    float OS_R_,    float OS_L_,
     /*Streb*/	float Streb_S_, float Streb_R_, float Streb_L_,
-    /*AM*/	float AM_S_,    float AM_R_,    float AM_L_,    float AM_A_, float AM_BRf_,
+    /*AM*/	float AM_S_,    float AM_R_,    float AM_L_,    float AM_V_,
     /*VS*/	float VS_S_,    float VS_R_,    float VS_L_,
 		float dX_,
 		Solver_Params& solv_params_) 
@@ -83,7 +83,7 @@ namespace G3_1 {
                     "AM" /*element*/, section_, network_,
                     mon_opts_,
                     AM_S_ /*S*/, AM_R_ /*R*/, AM_L_ /*L*/, dX_,
-                    AM_A_, AM_BRf_, solv_params_);
+                    AM_V_, solv_params_);
 		
 	    Q_VS = new Qmt(5/*id*/, "Q_VS", communicator_,
                     "VS" /*element*/, section_, network_,
@@ -277,8 +277,8 @@ namespace G3_1 {
                                                  "Q_AM" /*rcv_id*/, Ports_Qm::set_Qm,
                                                  N_AM /*size*/));
             communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_AM::set_Qm0  + proxy_disp /*port*/,
-                                                 "Q_AM" /*rcv_id*/, Ports_Qm::set_Qm0,
-                                                 N_AM /*size*/));
+                                                 "Q_AM" /*rcv_id*/, Ports_Qm::set_Qm0));
+                                                 /*1*/
             communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_AM::set_P  + proxy_disp /*port*/,
                                                  "Q_AM" /*rcv_id*/, Ports_Qm::set_P,
                                                  N_AM-1 /*size*/));
@@ -334,8 +334,8 @@ namespace G3_1 {
                                                  master /*rcv_id*/, Proxies_AM::get_Qm + proxy_disp  /*port*/,
                                                  N_AM /*size*/));
             communicator->add_comm_link(new CommLink("Q_AM" /*snd_id*/, Ports_Qm::get_Qm0,
-                                                 master /*rcv_id*/, Proxies_AM::get_Qm0 + proxy_disp  /*port*/,
-                                                 N_AM /*size*/));
+                                                 master /*rcv_id*/, Proxies_AM::get_Qm0 + proxy_disp  /*port*/));
+                                                 /*1*/
             communicator->add_comm_link(new CommLink("Q_AM" /*snd_id*/, Ports_Qm::get_P,
                                                  master /*rcv_id*/, Proxies_AM::get_P + proxy_disp  /*port*/,
                                                  N_AM-1 /*size*/));
@@ -402,7 +402,7 @@ namespace G3_1 {
                                                  "Q_AM_q"+to_string(N_AM-1)/*rcv_id*/, Ports_q::num_set_pend));
 
             // Data Flow Qm->Qmt
-            communicator->add_comm_link(new CommLink("Q_AM_qm"+to_string(N_AM-1)/*snd_id*/, Ports_qm::gas_get_qm,
+            communicator->add_comm_link(new CommLink("Q_AM_qmt"+to_string(N_AM-1)/*snd_id*/, Ports_qmt::gas_get_qm,
             					     "Q_VS_qmt0" /*snd_id*/, Ports_qmt::gas_set_qm));
     	};
 	
@@ -541,7 +541,7 @@ namespace G3_1 {
 
     	    // Receive value from Master
     	    buffer_sync(Ports_QQmt::set_Qm_AM);
-
+    	    
             for (int i=0; i<N_AM; i++)
     		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qm_AM, i/*index*/); // q[0..N]
             buffer_clear(Ports_QQmt::set_Qm_AM);
@@ -569,20 +569,20 @@ namespace G3_1 {
 	virtual void command__set_Qm0_AM() {
     	    stringstream out;
     	    
-    	    float value[N_AM];
+    	    float value[1];
 
     	    // Receive value from Master
     	    buffer_sync(Ports_QQmt::set_Qm0_AM);
 
-            for (int i=0; i<N_AM; i++)
-    		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qm0_AM, i/*index*/); // q[0..N]
+            for (int i=0; i<1; i++)
+    		value[i] = get_buffer_value<float>(Ports_QQmt::set_Qm0_AM, i/*index*/); // qm[0]
             buffer_clear(Ports_QQmt::set_Qm0_AM);
-
+            
 	    //
             //Propagation to underlying Q's
             //
     	    out << "ms_" << id << "(" << id_str << "): Initialized qm0_AM = {";
-            for (int i=0; i<N_AM; i++) {
+            for (int i=0; i<1; i++) {
                 out << value[i] << ", ";
                 add_proxy_value<float>(Proxies_AM::set_Qm0, value[i] /*value*/);
             }

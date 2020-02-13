@@ -36,8 +36,9 @@ int main (int argc, char* argv[]) {
     float dX = 113;
     
     // gas parameters of qm-elements
-    float A = 1460.0;
-    float BRf = 1.71;
+    // float A = 1460.0;
+    // float BRf = 1.71;
+    float V = 28000;
     float Qm0 = 0.0175;
             
     // parameters of P-elements
@@ -55,23 +56,23 @@ int main (int argc, char* argv[]) {
     mpi_map.add({"Qm0",    0});
     mpi_map.add({"Qm0_qm0", 1});
     mpi_map.add({"Qm0_q0",  1});
-    mpi_map.add({"Qm0_qm1", 2});
+    mpi_map.add({"Qm0_qmt1", 2});
     mpi_map.add({"Qm0_q1",  2});
-    mpi_map.add({"Qm0_qm2", 3});
+    mpi_map.add({"Qm0_qmt2", 3});
     mpi_map.add({"Qm0_q2",  3});
-    mpi_map.add({"Qm0_qm3", 4});
+    mpi_map.add({"Qm0_qmt3", 4});
     mpi_map.add({"Qm0_q3",  4});
-    mpi_map.add({"Qm0_qm4", 5});
+    mpi_map.add({"Qm0_qmt4", 5});
     mpi_map.add({"Qm0_q4",  5});
-    mpi_map.add({"Qm0_qm5", 6});
+    mpi_map.add({"Qm0_qmt5", 6});
     mpi_map.add({"Qm0_q5",  6});
-    mpi_map.add({"Qm0_qm6", 7});
+    mpi_map.add({"Qm0_qmt6", 7});
     mpi_map.add({"Qm0_q6",  7});
-    mpi_map.add({"Qm0_qm7", 8});
+    mpi_map.add({"Qm0_qmt7", 8});
     mpi_map.add({"Qm0_q7",  8});
-    mpi_map.add({"Qm0_qm8", 9});
+    mpi_map.add({"Qm0_qmt8", 9});
     mpi_map.add({"Qm0_q8",  9});
-    mpi_map.add({"Qm0_qm9",10});
+    mpi_map.add({"Qm0_qmt9",10});
     mpi_map.add({"Qm0_q9", 10});
     mpi_map.add({"Qm0_p0", 11});
     mpi_map.add({"Qm0_p1", 12});
@@ -108,7 +109,8 @@ int main (int argc, char* argv[]) {
 	"OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
 	 mon_opts,
 	 S /*S*/, R /*R*/, L /*L*/, dX, 
-	 A, BRf, solv_params);
+	 /*A, BRf*/ V,
+	 solv_params);
 		 
     Q0->add_buffer(new LocalIntBuffer(Q0->id /*ms_id*/, Q0->id_str, 0 /*port*/, Q0->communicator));
     Q0->add_buffer_value(0, Commands_Qm::id);

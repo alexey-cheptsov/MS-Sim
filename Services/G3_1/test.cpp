@@ -44,8 +44,7 @@ int main (int argc, char* argv[]) {
     float AM_S = 2.3;   // square cut
     float AM_R = 81  ;  // resistance
     float AM_L = 130;   // length
-    float AM_A = 1460.0;
-    float AM_BRf = 1.71;
+    float AM_V = 280000;
     float AM_Qm0 = 0.0175;
 	// VS
     float VS_S = 5.5;   // square cut
@@ -102,9 +101,9 @@ int main (int argc, char* argv[]) {
     mpi_map.add({"Q_AM",		27});
     mpi_map.add({"Q_AM_qm0",	   	28});
     mpi_map.add({"Q_AM_q0",	   	28});
-    mpi_map.add({"Q_AM_qm1",		29});
+    mpi_map.add({"Q_AM_qmt1",		29});
     mpi_map.add({"Q_AM_q1",		29});
-    mpi_map.add({"Q_AM_qm2",		30});
+    mpi_map.add({"Q_AM_qmt2",		30});
     mpi_map.add({"Q_AM_q2",		30});
     mpi_map.add({"Q_AM_p0",		31});
     mpi_map.add({"Q_AM_p1",		32});
@@ -176,7 +175,7 @@ int main (int argc, char* argv[]) {
 	    mon_opts,
 /*OS*/      OS_S, OS_R, OS_L,
 /*Streb*/   Streb_S, Streb_R, Streb_L,
-/*AM*/      AM_S, AM_R, AM_L, AM_A, AM_BRf,
+/*AM*/      AM_S, AM_R, AM_L, AM_V,
 /*VS*/      VS_S, VS_R, VS_L,
             dX,
             solv_params);

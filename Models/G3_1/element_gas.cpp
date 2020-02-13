@@ -51,7 +51,7 @@ public:
                 Monitoring_opts* mon_opts_,
     /*OS*/      float OS_S_,    float OS_R_,    float OS_L_,
     /*Streb*/   float Streb_S_, float Streb_R_, float Streb_L_,
-    /*AM*/      float AM_S_,    float AM_R_,    float AM_L_,    float AM_A_, float AM_BRf_,
+    /*AM*/      float AM_S_,    float AM_R_,    float AM_L_,    float AM_V_,
     /*VS*/      float VS_S_,    float VS_R_,    float VS_L_,
                 float dX_,
                 Solver_Params& solv_params_)
@@ -78,7 +78,7 @@ public:
             mon_opts_,
 /*OS*/      OS_S_, OS_R_, OS_L_,
 /*Streb*/   Streb_S_, Streb_R_, Streb_L_,
-/*AM*/      AM_S_, AM_R_, AM_L_, AM_A_, AM_BRf_,
+/*AM*/      AM_S_, AM_R_, AM_L_, AM_V_,
 /*VS*/      VS_S_, VS_R_, VS_L_,
             dX_,
             solv_params_);
@@ -222,8 +222,8 @@ public:
 					 "QQmt0" /*rcv_id*/, Ports_QQmt::set_Qms_VS,
 					 N_VS /*size*/));
 	communicator->add_comm_link(new CommLink(master /*snd_id*/, Ports_QQmt::set_Qm0_AM  + proxy_disp /*port*/, 
-					 "QQmt0" /*rcv_id*/, Ports_QQmt::set_Qm0_AM,
-					 N_AM /*size*/));
+					 "QQmt0" /*rcv_id*/, Ports_QQmt::set_Qm0_AM));
+					 /*1*/
 	communicator->add_comm_link(new CommLink(master /*snd_id*/, Ports_QQmt::set_R_reg_VS  + proxy_disp /*port*/, 
 					 "QQmt0" /*rcv_id*/, Ports_QQmt::set_R_reg_VS,
 					 N_VS /*size*/));
@@ -374,11 +374,11 @@ public:
     }
 
     // sets value of all q-approx_elements
-    void set_Qm0_AM(float* values /*[n]*/) {
+    void set_Qm0_AM(float* values /*[1]*/) {
 	// preparation of buffer
 	proxy_clear(Ports_QQmt::set_Qm0_AM);
 	
-	for (int i=0; i<N_AM; i++) {
+	for (int i=0; i<1; i++) {
 	    add_proxy_value<float>(Ports_QQmt::set_Qm0_AM, values[i]);
 	}
 	proxy_flush_collective_spread(Ports_QQmt::set_Qm0_AM);
@@ -499,7 +499,7 @@ public:
 	float qm_AM_old[N_AM];
 	float qm_VS_old[N_VS];
 	
-	float qm0_AM[N_AM];
+	float qm0_AM[1];
 
 
 	float P[2];
@@ -511,14 +511,12 @@ public:
         
 	for (int i=0; i<N_OS; i++) {
 	    q_OS[i] = 0;
-	    
 	    q_OS_old[i] = 0;
 	}
 	set_Q_OS(q_OS);
 	
 	for (int i=0; i<N_Streb; i++) {
 	    q_Streb[i] = 0;
-	    
 	    q_Streb_old[i] = 0;
 	}
 	set_Q_Streb(q_Streb);
@@ -526,13 +524,16 @@ public:
 	for (int i=0; i<N_AM; i++) {
 	    q_AM[i] = 0;
 	    qm_AM[i] = Qm0;
-	    qm0_AM[i] = Qm0;
 	    
 	    q_AM_old[i] = 0;
 	    qm_AM_old[i] = 0;
 	}
 	set_Q_AM(q_AM);
 	set_Qm_AM(qm_AM);
+	
+	for (int i=0; i<1; i++) {
+	    qm0_AM[i] = Qm0;
+	}
 	set_Qm0_AM(qm0_AM);
 	
 	for (int i=0; i<N_VS; i++) {
@@ -554,7 +555,8 @@ public:
 	init_time();
 
 	// Simulation
-	while ( !is_converged ) {
+	for (int i=0; i<1; i++) {
+//	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
@@ -572,8 +574,6 @@ public:
             	
     	    q_VS_old[0] = q_VS[0];
     	    qm_AM_old[0] = qm_AM[0];
-    	    
-
 	}
 
 	// Stopping the worker-ms
@@ -613,8 +613,7 @@ int main (int argc, char* argv[]) {
     float AM_S = 2.3;   // square cut
     float AM_R = 81  ;  // resistance
     float AM_L = 130;   // length
-    float AM_A = 1460.0;
-    float AM_BRf = 1.71;
+    float AM_V = 28000.0;
     float AM_Qm0 = 0.0175;
         // VS
     float VS_S = 5.5;   // square cut
@@ -672,9 +671,9 @@ int main (int argc, char* argv[]) {
     mpi_map.add({"Q_AM",                27});
     mpi_map.add({"Q_AM_qm0",            28});
     mpi_map.add({"Q_AM_q0",             28});
-    mpi_map.add({"Q_AM_qm1",            29});
+    mpi_map.add({"Q_AM_qmt1",            29});
     mpi_map.add({"Q_AM_q1",             29});
-    mpi_map.add({"Q_AM_qm2",            30});
+    mpi_map.add({"Q_AM_qmt2",            30});
     mpi_map.add({"Q_AM_q2",             30});
     mpi_map.add({"Q_AM_p0",             31});
     mpi_map.add({"Q_AM_p1",             32});
@@ -746,7 +745,7 @@ int main (int argc, char* argv[]) {
             mon_opts,
 /*OS*/      OS_S, OS_R, OS_L,
 /*Streb*/   Streb_S, Streb_R, Streb_L,
-/*AM*/      AM_S, AM_R, AM_L, AM_A, AM_BRf,
+/*AM*/      AM_S, AM_R, AM_L, AM_V,
 /*VS*/      VS_S, VS_R, VS_L,
             dX,
             solv_params);

@@ -49,9 +49,7 @@ namespace G1_1 {
 	float flow_gas;     	// methan generation from dynamic sources
 	float qm0;
 	
-	// Settings
-	float A;   // parameters of the filtration area
-        float BRf; //
+        float V; // parameters of the filtration area
         
         // Monitoring properties
         Monitoring* monitoring = nullptr;
@@ -62,11 +60,13 @@ namespace G1_1 {
         qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
             string name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
-            float S_, float r_, float l_, float A_, float BRf_, Solver_Params& solv_params_)
+            float S_, float r_, float l_, 
+            /*float A_, float BRf_,*/ float V_, Solver_Params& solv_params_)
             : Microservice(id_, id_str_, communicator_)
         {
-            A = A_;
-            BRf = BRf_;
+            //A = A_;
+            //BRf = BRf_;
+            V = V_;
 
             flow_gas = 0;
             qm0 = 0;
@@ -114,8 +114,11 @@ namespace G1_1 {
             buffer_clear(Ports_qm::gas_get_qm);
         };
 
-	float calc_dqm(float flow_gas, float dq, float q) {
-            return (qm0-flow_gas)/A + dq*q*2*BRf/A;
+        float calc_dqm(float flow_gas, float dq, float q) {
+            if (q != 0)
+                return (flow_gas/q)*dq ;//+ (1/V)*(qm0 - flow_gas)*q;
+            else
+                return 0;
         };
 
 	virtual void simulation_qm() {
@@ -127,18 +130,19 @@ namespace G1_1 {
             k3_qm = calc_dqm(flow_gas + h*k2_qm/2, air->k3_q, air->flow_prev_step);
             k4_qm = calc_dqm(flow_gas + h*k3_qm,   air->k4_q, air->flow_prev_step);
 
+	    float qm_old = flow_gas;
             air->solver->solve(&flow_gas, k1_qm, k2_qm, k3_qm, k4_qm);
 
-	    //if (id_str == "qm0") {
-	    //    stringstream out;
-	    //    
-	    //    out << id_str << ": q_old =" << flow_old << ", q_new =" << flow << endl
-            //            << "p_start = " << p_start << ", p_end = " << p_end << " --> k1 = " << k1_q << endl
-            //            << "k1_p_start = " << k1_p_start << ", k1_p_end =" << k1_p_end << " --> k2 = " << k2_q << endl
-            //            << "k2_p_start = " << k2_p_start << ", k2_p_end =" << k2_p_end << " --> k3 = " << k3_q << endl
-            //            << "k3_p_start = " << k3_p_start << ", k3_p_end =" << k3_p_end << " --> k4 = " << k4_q << endl << endl;
-    	    //	cout << out.str();
-    	    //}
+	    if (id_str == "Q_AM_qm0") {
+	        stringstream out;
+		cout << "qm_old = " << qm_old << " --> qm = " << flow_gas << endl
+                   << "k1_q = " << air->k1_q << " --> k1_qm = " << k1_qm << endl
+                   << "k2_q = " << air->k2_q << " --> k2_qm = " << k2_qm << endl
+                   << "k3_q = " << air->k3_q << " --> k3_qm = " << k3_qm << endl
+                   << "k4_q = " << air->k4_q << " --> k4_qm = " << k4_qm << endl
+                   << endl;
+    	    	cout << out.str();
+    	    }
         };
         
 	/*

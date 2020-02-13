@@ -14,6 +14,7 @@
 #include "proxies.h"
 
 #include "../G1_1/G1_1.h"
+#include "../G1_2/G1_2.h"
 #include "../A1_2/A1_2.h"
 
 #include "../../mpi_deployment.h"
@@ -33,7 +34,8 @@ namespace G2_1 {
     
 	int N;		// nr. of approx_elements
 	
-	qm** qq;	// underlying MS
+	qm** qqm;	// underlying MS
+	qmt** qqmt;	// underlying MS
 	p** pp;
 	
 	DeploymentPool* deployment_pool;
@@ -42,7 +44,7 @@ namespace G2_1 {
 	  string element_, string section_, string network_,
 	  Monitoring_opts* mon_opts_,
 	  float S_, float R_, float L_, float dX_, 
-	  float A_, float BRf_, Solver_Params& solv_params_) 
+	  /*float A_, float BRf_*/ float V_, Solver_Params& solv_params_) 
 		: Microservice(id_, id_str_, communicator_) 
         {
 	    N = std::round(L_/dX_);
@@ -53,16 +55,25 @@ namespace G2_1 {
 	    //communicator->print_comm_links();
 
     	    // Initialization of underlying microservices
-    	    qq   = new qm*[N];
-    	    pp   = new p* [N-1];
+    	    qqm  = new qm* [1];
+    	    qqmt = new qmt*[N-1];
+    	    pp   = new p*  [N-1];
     	    
     	    // Initialization of underlying microservices    
-    	    for (int i=0; i<N; i++)
-    		qq[i] = new qm(i+1/*id*/, id_str + "_qm" + to_string(i), id_str + "_q" + to_string(i), communicator_,
+    	    for (int i=0; i<1; i++)
+    		qqm[i] = new qm(i+1/*id*/, id_str + "_qm" + to_string(i), id_str + "_q" + to_string(i), communicator_,
     			       "qm" + to_string(i), element_, section_, network_,
     			       mon_opts_,
-    			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, A_, BRf_, solv_params_);
-    
+    			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, 
+    			       /*A_, BRf_*/ V_, solv_params_);
+    	
+    	    for (int i=0; i<N-1; i++)
+    		qqmt[i] = new qmt(1+(i+1)/*id*/, id_str + "_qmt" + to_string(1+i), id_str + "_q" + to_string(1+i), communicator_,
+    			       "qmt" + to_string(1+i), element_, section_, network_,
+    			       mon_opts_,
+    			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, 
+    			       solv_params_);
+    	
 	    for (int i=0; i<N-1; i++)
     		pp[i] = new p(N+(i+1)/*id*/, id_str + "_p" + to_string(i), communicator_,
     			      "p" + to_string(i), element_, section_, network_,
@@ -77,8 +88,10 @@ namespace G2_1 {
     	    deployment_pool = new MpiDeploymentPool(communicator_->mpi_map);
     	    
     	    // Spawning worker threads for underlying ms
-	    for (int i=0; i<N; i++) // Q
-    		deployment_pool->add_ms(qq[i]);
+	    for (int i=0; i<1; i++) // Q
+    		deployment_pool->add_ms(qqm[i]);
+    	    for (int i=0; i<N-1; i++) // Q
+    		deployment_pool->add_ms(qqmt[i]);
 	    for (int i=0; i<N-1; i++) // P
     		deployment_pool->add_ms(pp[i]);
 
@@ -96,6 +109,12 @@ namespace G2_1 {
     	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qm::get_qm,        communicator));
     	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qm::set_qm0,       communicator));
     	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qm::get_qm0,       communicator));
+    	    
+    	    add_proxy(new LocalIntBuffer  (id, id_str,  Proxies_qmt::command_flow, communicator));
+    	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qmt::set_q,        communicator));
+    	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qmt::get_q,        communicator));
+    	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qmt::set_qm,       communicator));
+    	    add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_qmt::get_qm,       communicator));
 
 	    add_proxy(new LocalIntBuffer  (id, id_str,  Proxies_p::command_flow,   communicator));
             add_proxy(new LocalFloatBuffer(id, id_str,  Proxies_p::set_p,          communicator));
@@ -106,20 +125,39 @@ namespace G2_1 {
     	    // 
 	    // Initialization of underlying MS' communication buffers
 	    //
-	    for (int i=0; i<N; i++) {
-        	qq[i]->add_buffer(new LocalIntBuffer  (qq[i]->id /*ms_id*/, qq[i]->id_str, 0 /*port*/, qq[i]->communicator));
-                qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 1 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 2 /*port*/, qq[i]->communicator));
-    	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 3 /*port*/, qq[i]->communicator));
-                qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 4 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 5 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 6 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 7 /*port*/, qq[i]->communicator));
-    	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 8 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 9 /*port*/, qq[i]->communicator));
-	        qq[i]->add_buffer(new LocalFloatBuffer(qq[i]->id /*ms_id*/, qq[i]->id_str, 10/*port*/, qq[i]->communicator));
+	    for (int i=0; i<1; i++) {
+        	qqm[i]->add_buffer(new LocalIntBuffer  (qqm[i]->id /*ms_id*/, qqm[i]->id_str, 0 /*port*/, qqm[i]->communicator));
+                qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 1 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 2 /*port*/, qqm[i]->communicator));
+    	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 3 /*port*/, qqm[i]->communicator));
+                qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 4 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 5 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 6 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 7 /*port*/, qqm[i]->communicator));
+    	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 8 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 9 /*port*/, qqm[i]->communicator));
+	        qqm[i]->add_buffer(new LocalFloatBuffer(qqm[i]->id /*ms_id*/, qqm[i]->id_str, 10/*port*/, qqm[i]->communicator));
             }
 
+	    for (int i=0; i<N-1; i++) {
+        	qqmt[i]->add_buffer(new LocalIntBuffer  (qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 0 /*port*/, qqmt[i]->communicator));
+                qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 1 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 2 /*port*/, qqmt[i]->communicator));
+    	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 3 /*port*/, qqmt[i]->communicator));
+                qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 4 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 5 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 6 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 7 /*port*/, qqmt[i]->communicator));
+    	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 8 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 9 /*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 10/*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 11/*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 12/*port*/, qqmt[i]->communicator));
+    	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 13/*port*/, qqmt[i]->communicator));
+                qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 14/*port*/, qqmt[i]->communicator));
+	        qqmt[i]->add_buffer(new LocalFloatBuffer(qqmt[i]->id /*ms_id*/, qqmt[i]->id_str, 15/*port*/, qqmt[i]->communicator));
+            }
+	    
 	    for (int i=0; i<N-1; i++) {
                 pp[i]->add_buffer(new LocalIntBuffer  (pp[i]->id /*ms_id*/, pp[i]->id_str, 0 /*port*/, pp[i]->communicator));
 	        pp[i]->add_buffer(new LocalFloatBuffer(pp[i]->id /*ms_id*/, pp[i]->id_str, 1 /*port*/, pp[i]->communicator));
@@ -134,9 +172,14 @@ namespace G2_1 {
 	    string master = id_str;
         
             // Command Flow Master->Q
-            for (int i=0; i<N; i++)
+        	// qm
+            for (int i=0; i<1; i++)
                 communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qm::command_flow  + proxy_disp /*port*/,
                                                      id_str + "_qm" + to_string(i) /*rcv_id*/, Ports_qm::command_flow));
+        	// qmt
+            for (int i=1; i<N; i++)
+                communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qmt::command_flow  + proxy_disp /*port*/,
+                                                     id_str + "_qmt" + to_string(i) /*rcv_id*/, Ports_qmt::command_flow));
         
             // Command Flow Master->P
             for (int i=0; i<N-1; i++)
@@ -144,7 +187,8 @@ namespace G2_1 {
                                                      id_str + "_p" + to_string(i) /*rcv_id*/, Ports_p::command_flow));
         
             // Data Flow Master->Q
-            for (int i=0; i<N; i++){
+        	// qm
+            for (int i=0; i<1; i++){
         	communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qm::set_q  + proxy_disp /*port*/,
                                                      id_str + "_qm" + to_string(i) /*rcv_id*/, Ports_qm::set_q));
                 communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qm::set_qm  + proxy_disp /*port*/,
@@ -152,19 +196,35 @@ namespace G2_1 {
                 communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qm::set_qm0  + proxy_disp /*port*/,
                                                      id_str + "_qm" + to_string(i) /*rcv_id*/, Ports_qm::set_qm0));
     	    }
+        	// qmt
+    	    for (int i=1; i<N; i++){
+        	communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qmt::set_q  + proxy_disp /*port*/,
+                                                     id_str + "_qmt" + to_string(i) /*rcv_id*/, Ports_qmt::set_q));
+                communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_qmt::set_qm  + proxy_disp /*port*/,
+                                                     id_str + "_qmt" + to_string(i) /*rcv_id*/, Ports_qmt::set_qm));
+    	    }
+    	    
             // Data Flow Master->P
             for (int i=0; i<N-1; i++)
                 communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_p::set_p + proxy_disp  /*port*/,
 	                                             id_str + "_p" + to_string(i) /*rcv_id*/, Ports_p::set_p));
         
             // Data Flow Q->Master
-            for (int i=0; i<N; i++) {
+        	// qm
+            for (int i=0; i<1; i++) {
                 communicator->add_comm_link(new CommLink(id_str + "_qm" + to_string(i) /*snd_id*/, Ports_qm::get_q,
                                                      master /*rcv_id*/, Proxies_qm::get_q + proxy_disp /*port*/));
                 communicator->add_comm_link(new CommLink(id_str + "_qm" + to_string(i) /*snd_id*/, Ports_qm::get_qm,
                                                      master /*rcv_id*/, Proxies_qm::get_qm + proxy_disp /*port*/));
 		communicator->add_comm_link(new CommLink(id_str + "_qm" + to_string(i) /*snd_id*/, Ports_qm::get_qm0,
                                                      master /*rcv_id*/, Proxies_qm::get_qm0 + proxy_disp /*port*/));
+    	    }
+        	// qmt
+    	    for (int i=1; i<N; i++) {
+                communicator->add_comm_link(new CommLink(id_str + "_qmt" + to_string(i) /*snd_id*/, Ports_qmt::get_q,
+                                                     master /*rcv_id*/, Proxies_qmt::get_q + proxy_disp /*port*/));
+                communicator->add_comm_link(new CommLink(id_str + "_qmt" + to_string(i) /*snd_id*/, Ports_qmt::get_qm,
+                                                     master /*rcv_id*/, Proxies_qmt::get_qm + proxy_disp /*port*/));
     	    }
             // Data Flow P->Master
             for (int i=0; i<N-1; i++)
@@ -189,6 +249,17 @@ namespace G2_1 {
                 communicator->add_comm_link(new CommLink(id_str + "_p"+to_string(i)/*snd_id*/, Ports_p::num_get_p,
 	                                             id_str + "_q"+to_string(i)/*rcv_id*/,  Ports_q::num_set_pend));
             }                                     
+            
+            // Data Flow qmt->qmt (transport)
+            for (int i=0; i<1; i++) {
+                communicator->add_comm_link(new CommLink(id_str + "_qm"+to_string(i)/*snd_id*/, Ports_qm::gas_get_qm,
+                                                         id_str + "_qmt"+to_string(i+1)/*snd_id*/, Ports_qmt::gas_set_qm));
+            }
+            for (int i=1; i<N-1; i++) {
+                communicator->add_comm_link(new CommLink(id_str + "_qmt"+to_string(i)/*snd_id*/, Ports_qmt::gas_get_qm,
+                                                        id_str + "_qmt"+to_string(i+1)/*snd_id*/, Ports_qmt::gas_set_qm));
+            }
+
     	};
 	
 	
@@ -232,18 +303,31 @@ namespace G2_1 {
             for (int i=0; i<N; i++)
         	value[i] = get_buffer_value<float>(Ports_Qm::set_Qm, i/*index*/); // q[0..N]
             buffer_clear(Ports_Qm::set_Qm);
-
-            //Propagation to underlying q's
-            for (int i=0; i<N; i++) {
+            
+	    //Propagation to underlying qm's
+            for (int i=0; i<1; i++) {
                 out << value[i] << ", ";
                 add_proxy_value<float>(Proxies_qm::set_qm, value[i] /*value*/);
             }
             proxy_flush_collective_spread(Proxies_qm::set_qm);
             proxy_clear(Proxies_qm::set_qm);
-
+            
             add_proxy_value<int>(Proxies_qm::command_flow, Commands_qm::set_qm /*value*/);
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
+
+
+            //Propagation to underlying qmt's
+            for (int i=0; i<N-1; i++) {
+                out << value[1 + i] << ", ";
+                add_proxy_value<float>(Proxies_qmt::set_qm, value[1 + i] /*value*/);
+            }
+            proxy_flush_collective_spread(Proxies_qmt::set_qm);
+            proxy_clear(Proxies_qmt::set_qm);
+
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::set_qm /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
 
             out << "}" << endl;
             cout << out.str();
@@ -255,13 +339,14 @@ namespace G2_1 {
 
 	    // Receive value from Master
 	    buffer_sync(Ports_Qm::set_Qm0);
-	    float value[N];
-            for (int i=0; i<N; i++)
+
+	    float value[1];
+            for (int i=0; i<1; i++)
         	value[i] = get_buffer_value<float>(Ports_Qm::set_Qm0, i/*index*/); // q[0..N]
             buffer_clear(Ports_Qm::set_Qm0);
 
             //Propagation to underlying q's
-            for (int i=0; i<N; i++) {
+            for (int i=0; i<1; i++) {
                 out << value[i] << ", ";
                 add_proxy_value<float>(Proxies_qm::set_qm0, value[i] /*value*/);
             }
@@ -330,11 +415,21 @@ namespace G2_1 {
 	    add_proxy_value<int>(Proxies_qm::command_flow, Commands_qm::get_qm /*value*/);
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
+            
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::get_qm /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
+                        
 	    
 	    proxy_sync(Proxies_qm::get_qm);
-	    for (int i=0; i<N; i++)
+	    for (int i=0; i<1; i++)
                 q[i] = get_proxy_value<float>(Proxies_qm::get_qm, i /*index*/);
             proxy_clear(Proxies_qm::get_qm);
+	    
+	    proxy_sync(Proxies_qmt::get_qm);
+	    for (int i=0; i<N-1; i++)
+                q[1+i] = get_proxy_value<float>(Proxies_qmt::get_qm, i /*index*/);
+            proxy_clear(Proxies_qmt::get_qm);
             
             // Sending to Master
             for (int i=0; i<N; i++)
@@ -344,7 +439,7 @@ namespace G2_1 {
         }
         
         virtual void command__get_Qm0() {
-            float q[N];
+            float q[1];
 
 	    // Receive value from underlying q's
 	    add_proxy_value<int>(Proxies_qm::command_flow, Commands_qm::get_qm0 /*value*/);
@@ -352,12 +447,12 @@ namespace G2_1 {
             proxy_clear(Proxies_qm::command_flow);
 	    
 	    proxy_sync(Proxies_qm::get_qm0);
-	    for (int i=0; i<N; i++)
+	    for (int i=0; i<1; i++)
                 q[i] = get_proxy_value<float>(Proxies_qm::get_qm0, i /*index*/);
             proxy_clear(Proxies_qm::get_qm0);
             
             // Sending to Master
-            for (int i=0; i<N; i++)
+            for (int i=0; i<1; i++)
                 add_buffer_value<float>(Ports_Qm::get_Qm0, q[i] /*value*/);
             buffer_flush_collective_gather(Ports_Qm::get_Qm0);
             buffer_clear(Ports_Qm::get_Qm0);
@@ -388,6 +483,10 @@ namespace G2_1 {
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
             
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::simulation /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
+            
             add_proxy_value<int>(Proxies_p::command_flow, Commands_p::simulation /*value*/);
             proxy_flush_collective_replicate(Proxies_p::command_flow);
             proxy_clear(Proxies_p::command_flow);
@@ -397,6 +496,10 @@ namespace G2_1 {
 	    add_proxy_value<int>(Proxies_qm::command_flow, Commands_qm::save /*value*/);
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
+            
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::save /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
             
             add_proxy_value<int>(Proxies_p::command_flow, Commands_p::save /*value*/);
             proxy_flush_collective_replicate(Proxies_p::command_flow);
@@ -408,6 +511,10 @@ namespace G2_1 {
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
             
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::stop /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
+            
             add_proxy_value<int>(Proxies_p::command_flow, Commands_p::stop /*value*/);
             proxy_flush_collective_replicate(Proxies_p::command_flow);
             proxy_clear(Proxies_p::command_flow);
@@ -418,15 +525,23 @@ namespace G2_1 {
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
             
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::id /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
+            
             add_proxy_value<int>(Proxies_p::command_flow, Commands_p::id /*value*/);
             proxy_flush_collective_replicate(Proxies_p::command_flow);
             proxy_clear(Proxies_p::command_flow);
         }
 
 	virtual void command__init_time() {
-	    add_proxy_value<int>(Proxies_qm::command_flow, Commands_q::init_time /*value*/);
+	    add_proxy_value<int>(Proxies_qm::command_flow, Commands_qm::init_time /*value*/);
             proxy_flush_collective_replicate(Proxies_qm::command_flow);
             proxy_clear(Proxies_qm::command_flow);
+            
+            add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::init_time /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
             
             add_proxy_value<int>(Proxies_p::command_flow, Commands_p::init_time /*value*/);
             proxy_flush_collective_replicate(Proxies_p::command_flow);

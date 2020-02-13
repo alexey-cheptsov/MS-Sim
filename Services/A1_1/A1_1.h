@@ -172,9 +172,9 @@ namespace A1_1 {
 	    flow_prev_step = flow;
 	    solver->solve(&flow, k1_q, k2_q, k3_q, k4_q);
 	    
-	    //if (id_str == "Q_OS_q0") {
+	    //if (id_str == "q9") {
 	    //    stringstream out;
-	    //    
+	        
 	    //    out << id_str << ": q_old =" << flow_prev_step << ", q_new =" << flow << endl
             //            << "p_start = " << p_start << ", p_end = " << p_end << " --> k1 = " << k1_q << endl
             //            << "k1_p_start = " << k1_p_start << ", k1_p_end =" << k1_p_end << " --> k2 = " << k2_q << endl

@@ -35,8 +35,9 @@ int main (int argc, char* argv[]) {
     float L = 113;   // length
     
     // gas parameters of qm-elements
-    float A = 1460.0;
-    float BRf = 1.71;
+    // float A = 1460.0;
+    // float BRf = 1.71;
+    float V = 28000;
     float Qm0 = 0.0175;
             
     // parameters of P-elements
@@ -66,7 +67,8 @@ int main (int argc, char* argv[]) {
     qm q0(0, "qm0", "q0", communicator,
 		"qm0" /*name*/, "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
 		 mon_opts,
-		 S /*S*/, R/L /*r*/, L /*l*/, A, BRf, solv_params);
+		 S /*S*/, R/L /*r*/, L /*l*/, 
+		 /*A, BRf*/ V, solv_params);
 		 
     q0.add_buffer(new LocalIntBuffer  (q0.id /*ms_id*/, q0.id_str, 0 /*port*/, q0.communicator));
     

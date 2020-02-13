@@ -510,23 +510,23 @@ public:
         set_P(P);
         
 	for (int i=0; i<N_OS; i++) {
-	    q_OS[i] = 0;
-	    q_OS_old[i] = 0;
+	    q_OS[i] = 7.2;
+	    q_OS_old[i] = 7.2;
 	}
 	set_Q_OS(q_OS);
 	
 	for (int i=0; i<N_Streb; i++) {
-	    q_Streb[i] = 0;
-	    q_Streb_old[i] = 0;
+	    q_Streb[i] = 5.6;
+	    q_Streb_old[i] = 5.6;
 	}
 	set_Q_Streb(q_Streb);
 		
 	for (int i=0; i<N_AM; i++) {
-	    q_AM[i] = 0;
+	    q_AM[i] = 1.6;
 	    qm_AM[i] = Qm0;
 	    
-	    q_AM_old[i] = 0;
-	    qm_AM_old[i] = 0;
+	    q_AM_old[i] = 1.6;
+	    qm_AM_old[i] = Qm0;
 	}
 	set_Q_AM(q_AM);
 	set_Qm_AM(qm_AM);
@@ -537,14 +537,14 @@ public:
 	set_Qm0_AM(qm0_AM);
 	
 	for (int i=0; i<N_VS; i++) {
-	    q_VS[i] = 0;
-	    qm_VS[i] = 0;
-	    qms_VS[i] = 0;
+	    q_VS[i] = 7.2;
+	    qm_VS[i] = 7.2;
+	    qms_VS[i] = Qm0;
 	    
-	    q_VS_old[i] = 0;
-	    qm_VS_old[i] = 0;
+	    q_VS_old[i] = 7.2;
+	    qm_VS_old[i] = Qm0;
 	}
-	qms_VS[0] = 0.1;
+	qms_VS[0] = Qm0;
 	set_Q_VS(q_VS);
 	set_Qms_VS(qms_VS);
 	
@@ -555,8 +555,8 @@ public:
 	init_time();
 
 	// Simulation
-	for (int i=0; i<1; i++) {
-//	while ( !is_converged ) {
+//	for (int i=0; i<1; i++) {
+	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
@@ -613,7 +613,7 @@ int main (int argc, char* argv[]) {
     float AM_S = 2.3;   // square cut
     float AM_R = 81  ;  // resistance
     float AM_L = 130;   // length
-    float AM_V = 28000.0;
+    float AM_V = 2800.0;
     float AM_Qm0 = 0.0175;
         // VS
     float VS_S = 5.5;   // square cut

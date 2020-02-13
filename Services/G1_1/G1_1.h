@@ -116,7 +116,7 @@ namespace G1_1 {
 
         float calc_dqm(float flow_gas, float dq, float q) {
             if (q != 0)
-                return (flow_gas/q)*dq ;//+ (1/V)*(qm0 - flow_gas)*q;
+                return (flow_gas/q)*dq + (1/V)*(qm0 - flow_gas)*q;
             else
                 return 0;
         };
@@ -133,16 +133,16 @@ namespace G1_1 {
 	    float qm_old = flow_gas;
             air->solver->solve(&flow_gas, k1_qm, k2_qm, k3_qm, k4_qm);
 
-	    if (id_str == "Q_AM_qm0") {
-	        stringstream out;
-		cout << "qm_old = " << qm_old << " --> qm = " << flow_gas << endl
-                   << "k1_q = " << air->k1_q << " --> k1_qm = " << k1_qm << endl
-                   << "k2_q = " << air->k2_q << " --> k2_qm = " << k2_qm << endl
-                   << "k3_q = " << air->k3_q << " --> k3_qm = " << k3_qm << endl
-                   << "k4_q = " << air->k4_q << " --> k4_qm = " << k4_qm << endl
-                   << endl;
-    	    	cout << out.str();
-    	    }
+	    //if (id_str == "Q_AM_qm0") {
+	    //    stringstream out;
+	    //	cout << "qm_old = " << qm_old << " --> qm = " << flow_gas << endl
+    	    //       << "k1_q = " << air->k1_q << " --> k1_qm = " << k1_qm << endl
+            //       << "k2_q = " << air->k2_q << " --> k2_qm = " << k2_qm << endl
+            //       << "k3_q = " << air->k3_q << " --> k3_qm = " << k3_qm << endl
+            //       << "k4_q = " << air->k4_q << " --> k4_qm = " << k4_qm << endl
+            //       << endl;
+    	    //	cout << out.str();
+    	    //}
         };
         
 	/*

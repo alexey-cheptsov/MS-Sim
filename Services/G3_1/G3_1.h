@@ -119,6 +119,77 @@ namespace G3_1 {
 	    deployment_pool->deploy_all();
 	}
 	
+	QQmt(int id_, string id_str_, MpiCommunicator* communicator_, 
+		string section_, string network_,
+		Monitoring_opts* mon_opts_,
+    /*OS*/	float OS_S_,    float OS_R_,    float OS_L_,
+    /*Streb*/	float Streb_S_, float Streb_R_, float Streb_L_,
+    /*AM*/	float AM_S_,    float AM_R_,    float AM_L_,    float AM_V_,
+    /*VS*/	float VS_S_,    float VS_R_,    float VS_L_,
+		float dX_,
+		Solver_Params& solv_params_) 
+		    : Microservice(id_, id_str_, communicator_) 
+        {
+    	    N_OS    = round(OS_L_   /dX_);
+    	    N_Streb = round(Streb_L_/dX_);
+    	    N_AM    = round(AM_L_   /dX_);
+    	    N_VS    = round(VS_L_   /dX_);
+    	    
+    	    // Setup of communication map
+    	    set_communications();
+	    //communicator->print_comm_links();
+
+    	    // Initialization of underlying microservices
+            Q_OS = new Q(2/*id*/, "Q_OS", communicator_,
+                    "OS" /*element*/, section_, network_,
+                    mon_opts_,
+                    OS_S_ /*S*/, OS_R_ /*R*/, OS_L_ /*L*/, dX_, solv_params_);
+
+	    Q_Streb = new Q(3/*id*/, "Q_Streb", communicator_,
+                    "Streb" /*element*/, section_, network_,
+                    mon_opts_,
+                    Streb_S_ /*S*/, Streb_R_ /*R*/, Streb_L_ /*L*/, dX_, solv_params_);
+
+	    Q_AM = new Qm(4/*id*/, "Q_AM", communicator_,
+                    "AM" /*element*/, section_, network_,
+                    mon_opts_,
+                    AM_S_ /*S*/, AM_R_ /*R*/, AM_L_ /*L*/, dX_,
+                    AM_V_, solv_params_);
+		
+	    Q_VS = new Qmt(5/*id*/, "Q_VS", communicator_,
+                    "VS" /*element*/, section_, network_,
+                    mon_opts_,
+                    VS_S_ /*S*/, VS_R_ /*R*/, VS_L_ /*L*/, dX_,
+                    solv_params_);
+
+    	    Pqmt   = new p*[2];
+    	    Pqmt[0] = new p(6/*id*/, "Pqmt0", communicator_,
+    		      "Pqmt0", section_, network_,
+    		      mon_opts_,
+    		      OS_S_ /*S*/, dX_ /*dX*/, false /*is_boundary*/, solv_params_);
+    	    Pqmt[1] = new p(7/*id*/, "Pqmt1", communicator_,
+    		      "Pqmt1", section_, network_,
+    		      mon_opts_,
+    		      VS_S_ /*S*/, dX_ /*dX*/, false /*is_boundary*/, solv_params_);
+	    	    
+	    // Init underlying ms
+	    init_proxies();
+	    init_buffers();
+	    
+	    // Deployment pool initialization
+    	    deployment_pool = new MpiDeploymentPool(communicator_->mpi_map);
+    	    
+    	    // Spawning worker threads for underlying ms
+    	    deployment_pool->add_ms(Q_OS);
+    	    deployment_pool->add_ms(Q_Streb);    	    
+    	    deployment_pool->add_ms(Q_AM);
+    	    deployment_pool->add_ms(Q_VS);
+    	    deployment_pool->add_ms(Pqmt[0]);
+    	    deployment_pool->add_ms(Pqmt[1]);    	    
+
+	    deployment_pool->deploy_all();
+	}
+	
 	void init_proxies() {
     	    // 
 	    // Initialization of communication proxies

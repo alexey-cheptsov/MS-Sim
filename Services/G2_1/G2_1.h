@@ -85,6 +85,53 @@ namespace G2_1 {
 	    deployment_pool->deploy_all();
 	}
 	
+	Qm(int id_, string id_str_, MpiCommunicator* communicator_, 
+	  string element_, string section_, string network_,
+	  Monitoring_opts* mon_opts_,
+	  float S_, float R_, float L_, float dX_, 
+	  float V_, Solver_Params& solv_params_) 
+		: Microservice(id_, id_str_, communicator_) 
+        {
+	    N = std::round(L_/dX_);
+    	    float dX = L_/N;   // correction of deltaX value
+    	    
+    	    // Setup of communication map
+    	    set_communications();
+	    //communicator->print_comm_links();
+
+    	    // Initialization of underlying microservices
+    	    qq   = new qm*[N];
+    	    pp   = new p* [N-1];
+    	    
+    	    // Initialization of underlying microservices    
+    	    for (int i=0; i<N; i++)
+    		qq[i] = new qm(i+1/*id*/, id_str + "_qm" + to_string(i), id_str + "_q" + to_string(i), communicator_,
+    			       "qm" + to_string(i), element_, section_, network_,
+    			       mon_opts_,
+    			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, V_, solv_params_);
+    
+	    for (int i=0; i<N-1; i++)
+    		pp[i] = new p(N+(i+1)/*id*/, id_str + "_p" + to_string(i), communicator_,
+    			      "p" + to_string(i), element_, section_, network_,
+    			      mon_opts_,
+    			      S_ /*S*/, L_/N /*dX*/, false /*is_boundary*/, solv_params_);
+	    	    
+	    // Init underlying ms
+	    init_proxies();
+	    init_buffers();
+	    
+	    // Deployment pool initialization
+    	    deployment_pool = new MpiDeploymentPool(communicator_->mpi_map);
+    	    
+    	    // Spawning worker threads for underlying ms
+	    for (int i=0; i<N; i++) // Q
+    		deployment_pool->add_ms(qq[i]);
+	    for (int i=0; i<N-1; i++) // P
+    		deployment_pool->add_ms(pp[i]);
+
+	    deployment_pool->deploy_all();
+	}
+	
 	void init_proxies() {
     	    // 
 	    // Initialization of communication proxies

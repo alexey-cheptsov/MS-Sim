@@ -50,8 +50,9 @@ namespace G1_1 {
 	float qm0;
 	
 	// Settings
-	float A;   // parameters of the filtration area
-        float BRf; //
+	float A=0;   // parameters of the filtration area
+        float BRf=0; //
+        float V = 0;
         
         // Monitoring properties
         Monitoring* monitoring = nullptr;
@@ -67,6 +68,35 @@ namespace G1_1 {
         {
             A = A_;
             BRf = BRf_;
+
+            flow_gas = 0;
+            qm0 = 0;
+
+            air = new q(1000 + id_, air_id_str_, communicator_,  name_, element_, section_, network_, 
+        		S_, r_, l_, solv_params_);
+        		
+    	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 1 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 2 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 3 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 4 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 5 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 6 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 7 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 8 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
+
+            mon_opts = mon_opts_;
+            monitoring = new Monitoring(mon_opts_);
+        };
+        
+        qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
+            string name_, string element_, string section_, string network_,
+            Monitoring_opts* mon_opts_,
+            float S_, float r_, float l_, float V_, Solver_Params& solv_params_)
+            : Microservice(id_, id_str_, communicator_)
+        {
+            V = V_;
 
             flow_gas = 0;
             qm0 = 0;
@@ -113,8 +143,17 @@ namespace G1_1 {
             buffer_flush_collective_gather(Ports_qm::gas_get_qm);
             buffer_clear(Ports_qm::gas_get_qm);
         };
+        
+        // in case of V
+        float calc_dqm_V(float flow_gas, float dq, float q) {
+            if (q != 0)
+                return (flow_gas/q)*dq + (1/V)*(qm0 - flow_gas)*q;
+            else
+                return 0;
+        };
 
-	float calc_dqm(float flow_gas, float dq, float q) {
+	// in case of A and BRf
+	float calc_dqm_ABRf(float flow_gas, float dq, float q) {
             return (qm0-flow_gas)/A + dq*q*2*BRf/A;
         };
 
@@ -122,10 +161,17 @@ namespace G1_1 {
 	    float k1_qm, k2_qm, k3_qm, k4_qm;
 	    float h = air->solver->h;
         
-            k1_qm = calc_dqm(flow_gas,             air->k1_q, air->flow_prev_step);
-            k2_qm = calc_dqm(flow_gas + h*k1_qm/2, air->k2_q, air->flow_prev_step);
-            k3_qm = calc_dqm(flow_gas + h*k2_qm/2, air->k3_q, air->flow_prev_step);
-            k4_qm = calc_dqm(flow_gas + h*k3_qm,   air->k4_q, air->flow_prev_step);
+    	    if (V==0) {
+        	k1_qm = calc_dqm_ABRf(flow_gas,             air->k1_q, air->flow_prev_step);
+        	k2_qm = calc_dqm_ABRf(flow_gas + h*k1_qm/2, air->k2_q, air->flow_prev_step);
+        	k3_qm = calc_dqm_ABRf(flow_gas + h*k2_qm/2, air->k3_q, air->flow_prev_step);
+        	k4_qm = calc_dqm_ABRf(flow_gas + h*k3_qm,   air->k4_q, air->flow_prev_step);
+    	    } else {
+    		k1_qm = calc_dqm_V(flow_gas,             air->k1_q, air->flow_prev_step);
+        	k2_qm = calc_dqm_V(flow_gas + h*k1_qm/2, air->k2_q, air->flow_prev_step);
+        	k3_qm = calc_dqm_V(flow_gas + h*k2_qm/2, air->k3_q, air->flow_prev_step);
+        	k4_qm = calc_dqm_V(flow_gas + h*k3_qm,   air->k4_q, air->flow_prev_step);
+    	    }
 
             air->solver->solve(&flow_gas, k1_qm, k2_qm, k3_qm, k4_qm);
 

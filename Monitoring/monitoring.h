@@ -381,6 +381,7 @@ public:
 
     void add_entry(string net, string sec, string elem, string name, string timestamp, float value_1, float value_2)
     {
+	count = 0;
 		if (mon_opts->flag_output_file){
 
 		    ss << "\"" << experiment_id << "\"" << ";" << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value_1 << endl;

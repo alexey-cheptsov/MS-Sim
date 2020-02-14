@@ -483,10 +483,10 @@ public:
 
         
     void run() {
-	float start_q_OS = 	7.2;
-	float start_q_Streb = 	5.6;
-	float start_q_AM = 	1.6;
-	float start_q_VS = 	7.2;
+	float start_q_OS = 	0; //7.20065;
+	float start_q_Streb = 	0; //5.60071;
+	float start_q_AM = 	0; //1.59993;
+	float start_q_VS = 	0; //7.20065;
 
 	float q_OS[N_OS];
 	float q_Streb[N_Streb];
@@ -558,7 +558,8 @@ public:
 	init_time();
 
 	// Simulation
-	while ( !is_converged ) {
+	for (int i=0; i<2; i++) {
+	//while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
@@ -634,7 +635,7 @@ int main (int argc, char* argv[]) {
     // numeric parameters
     Solver_Params solv_params = { 0.15        /*time step in s.*/,
                                   0.000001    /*precision*/,
-                                  30          /*nr. of numeric steps in sim block*/  };
+                                  1          /*nr. of numeric steps in sim block*/  };
     
     // Deployment options
     MpiProcessMap mpi_map;

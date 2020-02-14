@@ -60,6 +60,7 @@ namespace G1_1 {
         fstream* output_air = nullptr;      // output file for q
         fstream* output_gas = nullptr;      // output file for qm
         
+        // Constructor for model with A, BRf parameters
         qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
             string name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
@@ -90,6 +91,7 @@ namespace G1_1 {
             monitoring = new Monitoring(mon_opts_);
         };
         
+        // Constructor for model with V parameter
         qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
             string name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
@@ -147,7 +149,7 @@ namespace G1_1 {
         // in case of V
         float calc_dqm_V(float flow_gas, float dq, float q) {
             if (q != 0)
-                return (flow_gas/q)*dq + (1/V)*(qm0 - flow_gas)*q;
+                return flow_gas*dq/q + (qm0-flow_gas)*q/V;
             else
                 return 0;
         };
@@ -173,18 +175,20 @@ namespace G1_1 {
         	k4_qm = calc_dqm_V(flow_gas + h*k3_qm,   air->k4_q, air->flow_prev_step);
     	    }
 
+	    float qm_old = flow_gas;
             air->solver->solve(&flow_gas, k1_qm, k2_qm, k3_qm, k4_qm);
 
-	    //if (id_str == "qm0") {
-	    //    stringstream out;
-	    //    
-	    //    out << id_str << ": q_old =" << flow_old << ", q_new =" << flow << endl
-            //            << "p_start = " << p_start << ", p_end = " << p_end << " --> k1 = " << k1_q << endl
-            //            << "k1_p_start = " << k1_p_start << ", k1_p_end =" << k1_p_end << " --> k2 = " << k2_q << endl
-            //            << "k2_p_start = " << k2_p_start << ", k2_p_end =" << k2_p_end << " --> k3 = " << k3_q << endl
-            //            << "k3_p_start = " << k3_p_start << ", k3_p_end =" << k3_p_end << " --> k4 = " << k4_q << endl << endl;
-    	    //	cout << out.str();
-    	    //}
+    	    //if (id_str == "Q_AM_qm0") {
+            //    stringstream out;
+            //    cout << "qm_old = " << qm_old << " --> qm = " << flow_gas << endl
+            //	     << "k1_q = " << air->k1_q << " --> k1_qm = " << k1_qm << endl
+            //         << "k2_q = " << air->k2_q << " --> k2_qm = " << k2_qm << endl
+            //         << "k3_q = " << air->k3_q << " --> k3_qm = " << k3_qm << endl
+            //         << "k4_q = " << air->k4_q << " --> k4_qm = " << k4_qm << endl
+            //         << endl;
+            //  cout << out.str();
+            //}
+
         };
         
 	/*

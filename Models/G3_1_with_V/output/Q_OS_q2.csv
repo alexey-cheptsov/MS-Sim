@@ -1,1 +1,3 @@
 ExperimentID;Network;Section;Element;@timestamp;q
+"2020-02-14T08:21:03.559";"Network1";"Section1";"OS";"2020-02-14T08:21:03.784";7.17981
+"2020-02-14T08:21:03.559";"Network1";"Section1";"OS";"2020-02-14T08:21:03.934";7.86709

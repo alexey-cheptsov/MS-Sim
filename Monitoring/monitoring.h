@@ -75,8 +75,7 @@ public:
     stringstream ss;
     stringstream ssg;
 
-    int counter;
-    int buffer;
+    int counter = 0;
 
     Monitoring(Monitoring_opts* mon_opts_) {
 	mon_opts = mon_opts_;
@@ -381,7 +380,6 @@ public:
 
     void add_entry(string net, string sec, string elem, string name, string timestamp, float value_1, float value_2)
     {
-	counter = 0;
 		if (mon_opts->flag_output_file){
 
 		    ss << "\"" << experiment_id << "\"" << ";" << "\"" << net << "\"" << ";" << "\"" << sec << "\"" << ";" << "\"" << elem << "\"" << ";" << "\"" << timestamp << "\"" << ";" << value_1 << endl;

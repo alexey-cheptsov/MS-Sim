@@ -558,8 +558,7 @@ public:
 	init_time();
 
 	// Simulation
-	for (int i=0; i<2; i++) {
-	//while ( !is_converged ) {
+	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();

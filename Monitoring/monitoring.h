@@ -338,11 +338,14 @@ public:
     }
 
      
-    int prepare_save()   
-    {
-	    char* map_msg = " {\"mappings\": { \"properties\": {  \"P0\": {\"type\": \"float\"}, \"P1\": {\"type\": \"float\"}, \"QPQ0_P0\": {\"type\": \"float\"}, \"QPQ0_P1\": {\"type\": \"float\"}, \"q0\": {\"type\": \"float\"},   \"q1\": {\"type\": \"float\"},   \"q2\": {\"type\": \"float\"},   \"q3\": {\"type\": \"float\"},   \"q4\": {\"type\": \"float\"},   \"q5\": {\"type\": \"float\"},   \"q6\": {\"type\": \"float\"},   \"q7\": {\"type\": \"float\"},   \"q8\": {\"type\": \"float\"},   \"q9\": {\"type\": \"float\"},   \"q0_gas\": {\"type\": \"float\"},   \"q1_gas\": {\"type\": \"float\"},   \"q2_gas\": {\"type\": \"float\"},   \"q3_gas\": {\"type\": \"float\"}, \"q4_gas\": {\"type\": \"float\"},   \"q5_gas\": {\"type\": \"float\"},   \"q6_gas\": {\"type\": \"float\"},   \"q7_gas\": {\"type\": \"float\"},   \"q8_gas\": {\"type\": \"float\"},   \"q9_gas\": {\"type\": \"float\"},  \"p0\": {\"type\": \"float\"},   \"p1\": {\"type\": \"float\"},   \"p2\": {\"type\": \"float\"},   \"p3\": {\"type\": \"float\"},   \"p4\": {\"type\": \"float\"},   \"p5\": {\"type\": \"float\"},   \"p6\": {\"type\": \"float\"},   \"p7\": {\"type\": \"float\"},   \"p8\": {\"type\": \"float\"},   \"p9\": {\"type\": \"float\"},   \"p10\": {\"type\": \"float\"} } }} ";
+    int prepare_save(string id_str)   
+    {	
+	 if (id_str == "Q_OS_q7"){
+	    char* map_msg = " {\"mappings\": { \"properties\": {  \"P0\": {\"type\": \"float\"},          					\"P1\": {\"type\": \"float\"}, \"Pqmt0\": {\"type\": \"float\"},   					\"Pqmt1\": {\"type\": \"float\"}, \"q0\": {\"type\": \"float\"},     					\"q1\": {\"type\": \"float\"},   \"q2\": {\"type\": \"float\"},     					\"q3\": {\"type\": \"float\"},   \"q4\": {\"type\": \"float\"},   					\"q5\": {\"type\": \"float\"},   \"q6\": {\"type\": \"float\"},   					\"q7\": {\"type\": \"float\"},   \"q8\": {\"type\": \"float\"},   					\"q9\": {\"type\": \"float\"},   \"qm0_gas\": {\"type\": \"float\"},   				\"qm1_gas\": {\"type\": \"float\"},   \"qm2_gas\": {\"type\": \"float\"},   				\"qm0_air\": {\"type\": \"float\"}, \"qm1_air\": {\"type\": \"float\"},   				\"qm2_air\": {\"type\": \"float\"}, \"p0\": {\"type\": \"float\"},  					 \"p1\": {\"type\": \"float\"},   \"p2\": {\"type\": \"float\"},  					 \"p3\": {\"type\": \"float\"},   \"p4\": {\"type\": \"float\"},   					 \"p5\": {\"type\": \"float\"},   \"p6\": {\"type\": \"float\"},   					 \"p7\": {\"type\": \"float\"},   \"p8\": {\"type\": \"float\"},   					 \"p9\": {\"type\": \"float\"},  					   				\"qmt0_gas\": {\"type\": \"float\"}, \"qmt1_gas\": {\"type\": \"float\"},   				\"qmt2_gas\": {\"type\": \"float\"}, \"qmt3_gas\": {\"type\": \"float\"}, 		  		\"qmt4_gas\": {\"type\": \"float\"}, \"qmt5_gas\": {\"type\": \"float\"},   				\"qmt6_gas\": {\"type\": \"float\"}, \"qmt7_gas\": {\"type\":\"float\"}, 				\"qmt8_gas\": {\"type\": \"float\"}, \"qmt9_gas\": {\"type\":\"float\"},	 				\"qmt0_air\": {\"type\": \"float\"}, \"qmt1_air\": {\"type\": \"float\"},   				\"qmt2_air\": {\"type\": \"float\"}, \"qmt3_air\": {\"type\": \"float\"}, 		  		\"qmt4_air\": {\"type\": \"float\"}, \"qmt5_air\": {\"type\": \"float\"},   				\"qmt6_air\": {\"type\": \"float\"}, \"qmt7_air\": {\"type\":\"float\"}, 				\"qmt8_air\": {\"type\": \"float\"}, \"qmt9_air\": {\"type\":\"float\"} }}}";
 	    //del(uri); // delete all previous records on the db
 	    mapping(uri, map_msg );
+	    system("read");
+	    }
     }
 
     char * convert_comand(char * com)
@@ -432,8 +435,95 @@ public:
 	    }
     }
 
+ void data_flush(string id_str)
+    {
+	
+	int count_lines=0;
+	int i;
+	char c;
+	char labels[30][100];
+	char values[30][100];
+	char j_msg[512];
+	int fcounter=0;
+	int num_label=0;
+	int num_char=0;
 
-    void data_flush(string id_str)
+        if ((mon_opts->flag_output_uri) && (!mon_opts->flag_output_file)) {
+		cout << "msg is:" << json_msg << endl;	
+	    publish_json(convert_comand(bulk), json_msg);
+	} 
+	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)){
+		    if (fout_2 == nullptr) {
+			*fout_1 << ss.str()<< endl;		
+		    } else {
+			*fout_1 << ss.str() << endl;
+			*fout_2 << ssg.str() << endl;
+		    }
+	    
+	    string full_path = "./output/";
+	    full_path.append(id_str);
+	    full_path.append(".csv");
+	    ifstream infile(full_path);
+	
+	    while ((c = infile.get()) != EOF) {	    
+		if(( fcounter ==0))  {
+		    if (  (c==';' || c=='\n')) {
+			num_label++;
+			num_char=0;
+			labels[num_label][num_char]='\0';
+		    }
+	    
+		    if ((c!=';')&& (c!=10)) {
+		        labels[num_label][num_char]=c;
+		        labels[num_label][num_char+1]='\0';
+		        num_char=num_char+1;
+		    }
+		
+		    if(c=='\n') {
+		        fcounter ++;
+		        num_label=0;
+		        num_char=0;
+		        values[num_label][num_char]='\0';
+		    }
+		} else {
+		    if ((c==';' || c=='\n')){
+		        num_label++;
+		        num_char=0;
+		        values[num_label][num_char]='\0';
+		    }
+		
+		    if( (c!=';') && (c!=10)){
+		        values[num_label][num_char]=c;
+		        values[num_label][num_char+1]='\0';
+		        num_char=num_char+1;
+		    }
+		    
+		    if(c=='\n') {
+			cout << "were here" << endl;
+		        sprintf(j_msg,"{");
+		    
+		        for(i=0;i<num_label;i++) {
+			    if(i>0) sprintf(j_msg,"%s,",j_msg);
+			    sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
+		        }
+		
+		        sprintf(j_msg,"%s}\n",j_msg);
+	     		//printf(" msg is %s",j_msg);		
+					    
+			if (mon_opts->flag_output_uri)
+				publish_json(convert_comand(post), j_msg);
+				    
+			num_label=0;
+			count_lines++;
+		    }
+		}
+	    } 
+	
+	    infile.close();
+	}
+    }
+
+    /*void data_flush(string id_str)
     {
 	
 	int count_lines=0;
@@ -464,7 +554,7 @@ public:
 		*fout_2 << ssg.str();
 	    }
 	 
-	    if (id_str == "Q_OS_p0"){
+	    /*if (id_str == "Q_OS_q7"){
 		  if ((dir = opendir ("./output/")) != NULL) {
 	    	    while ((ent = readdir (dir)) != NULL) {
 			filename = ent->d_name;
@@ -517,7 +607,7 @@ public:
 					}
 				
 					sprintf(j_msg,"%s}\n",j_msg);
-			     		//printf(" msg is %s",j_msg);		
+			     		printf(" msg is %s",j_msg);		
 							    
 					if (mon_opts->flag_output_uri)
 						publish_json(convert_comand(post), j_msg);
@@ -536,7 +626,7 @@ public:
 	    	}
 	    }   			  
 	} 
-    }
+    }*/
 		
 
 }; // Clas Monitoring

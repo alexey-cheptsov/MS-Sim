@@ -51,15 +51,12 @@ int main (int argc, char* argv[]) {
     
     MpiCommunicator* communicator = new MpiCommunicator(mpi_map);
     
-    fstream* output = new fstream();
-    output->open("q0.csv", ios::out);
-    
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = "00000000000";
     mon_opts->flag_output_file  = 1;
 
     qmt q0(0, "qmt0", "q0", communicator,
-		"qmt0" /*name*/, "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
+		"qmt0" /*name*/, "q0" /*air_name*/, "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
 		 mon_opts,
 		 S /*S*/, R/L /*r*/, L /*l*/, solv_params);
 		 

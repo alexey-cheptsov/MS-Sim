@@ -43,6 +43,7 @@ namespace G1_2 {
     public:
 	// Description of the element's environment
         string name="";
+        string air_name="";
         string element="";
         string section ="";
         string network="";
@@ -57,16 +58,16 @@ namespace G1_2 {
 	// Monitoring properties
         Monitoring* monitoring = nullptr;
         Monitoring_opts* mon_opts;
-        fstream* output_air = nullptr;      // output file for q
         fstream* output_gas = nullptr;      // output file for qmt
 	
         qmt(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
-            string name_, string element_, string section_, string network_,
+            string name_, string air_name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
             float S_, float r_, float l_, Solver_Params& solv_params_)
             : Microservice(id_, id_str_, communicator_)
         {
     	    name = name_;
+    	    air_name = air_name_;
             element = element_;
             section = section_;
             network = network_;
@@ -74,7 +75,8 @@ namespace G1_2 {
             flow_gas = 0;
             flow_gas_sensor = 0;
             
-            air = new q(1000 + id_, air_id_str_, communicator_,  name_, element_, section_, network_,
+            air = new q(1000 + id_, air_id_str_, communicator_,  air_name_, element_, section_, network_,
+        		mon_opts_,
         		S_, r_, l_, solv_params_);
         
     	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
@@ -95,16 +97,12 @@ namespace G1_2 {
         void init_monitoring() {
     	    if (monitoring != nullptr) {
         	if (mon_opts->flag_output_file) {
-            	    output_air = new fstream();
             	    output_gas = new fstream();
-            	    monitoring->fout_1 = output_air;
-            	    monitoring->fout_2 = output_gas;
+            	    monitoring->fout_1 = output_gas;
 
-            	    output_air->open("output/" + id_str + "_air.csv", ios::out);
-            	    output_gas->open("output/" + id_str + "_gas.csv", ios::out);
+            	    output_gas->open("output/" + id_str + ".csv", ios::out);
 
-            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_air" << endl;
-            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_gas" << endl;
+            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
             	}
             }
         }
@@ -236,9 +234,12 @@ namespace G1_2 {
                 if (monitoring != nullptr) {
             	    air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
             	    
-		    monitoring->add_entry(air->network, air->section, air->element, air->name, 
+		    air->monitoring->add_entry(air->network, air->section, air->element, air->name, 
 				      air->time_ms.time_stamp(), 
-				      air->flow, flow_gas);
+				      air->flow);
+		    monitoring->add_entry(network, section, element, name, 
+				      air->time_ms.time_stamp(), 
+				      flow_gas);
 		}
             }
 	}
@@ -252,9 +253,13 @@ namespace G1_2 {
 	    // output to data layer
 	    if (monitoring != nullptr) {    	    
 		air->time_ms.init_time();
-        	monitoring->add_entry(air->network, air->section, air->element, air->name,
+		
+        	air->monitoring->add_entry(air->network, air->section, air->element, air->name,
             	                      air->time_ms.time_stamp(), 
-            	                      air->flow, flow_gas);
+            	                      air->flow);
+            	monitoring->add_entry(network, section, element, name,
+            	                      air->time_ms.time_stamp(), 
+            	                      flow_gas);
             }
 	}
 	
@@ -263,7 +268,7 @@ namespace G1_2 {
 		monitoring->data_flush(id_str);
 		
 		if (mon_opts->flag_output_file) {
-		    output_air->close();
+		    air->output->close();
 		    output_gas->close();
 		}
 	    }
@@ -285,6 +290,7 @@ namespace G1_2 {
 	}
 	
 	void run() {
+	    air->init_monitoring();
 	    init_monitoring();
 	
 	    bool finish = false;

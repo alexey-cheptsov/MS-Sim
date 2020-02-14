@@ -59,7 +59,7 @@ namespace G2_1 {
     	    // Initialization of underlying microservices    
     	    for (int i=0; i<N; i++)
     		qq[i] = new qm(i+1/*id*/, id_str + "_qm" + to_string(i), id_str + "_q" + to_string(i), communicator_,
-    			       "qm" + to_string(i), element_, section_, network_,
+    			       "qm" + to_string(i), "q" + to_string(i), element_, section_, network_,
     			       mon_opts_,
     			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, A_, BRf_, solv_params_);
     
@@ -106,7 +106,7 @@ namespace G2_1 {
     	    // Initialization of underlying microservices    
     	    for (int i=0; i<N; i++)
     		qq[i] = new qm(i+1/*id*/, id_str + "_qm" + to_string(i), id_str + "_q" + to_string(i), communicator_,
-    			       "qm" + to_string(i), element_, section_, network_,
+    			       "qm" + to_string(i), "q" + to_string(i), element_, section_, network_,
     			       mon_opts_,
     			       S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, V_, solv_params_);
     

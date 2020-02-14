@@ -634,7 +634,7 @@ int main (int argc, char* argv[]) {
     // numeric parameters
     Solver_Params solv_params = { 0.15        /*time step in s.*/,
                                   0.000001    /*precision*/,
-                                  1          /*nr. of numeric steps in sim block*/  };
+                                  30          /*nr. of numeric steps in sim block*/  };
     
     // Deployment options
     MpiProcessMap mpi_map;

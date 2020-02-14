@@ -156,7 +156,7 @@ namespace A1_2 {
             	    monitoring->fout_1 = output;
                 
             	    output->open("output/" + id_str + ".csv", ios::out);
-                    *output << "ExperimentID;Network;Section;Element;@timestamp;p" << endl;
+                    *output << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
                 }
             }   
         }            

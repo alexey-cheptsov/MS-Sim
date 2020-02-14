@@ -42,6 +42,12 @@ namespace G1_1 {
     class qm: public Microservice {
     public:
     
+        // Description of the element's environment
+        string name="";
+        string element="";
+        string section ="";
+        string network="";
+    
 	// Funtional dependencies
 	q* air;
     
@@ -60,17 +66,19 @@ namespace G1_1 {
         fstream* output_air = nullptr;      // output file for q
         fstream* output_gas = nullptr;      // output file for qm
         
-        // Constructor for model with A, BRf parameters
+        // Generic constructor
         qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
             string name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
-            float S_, float r_, float l_, float A_, float BRf_, Solver_Params& solv_params_)
+            float S_, float r_, float l_, Solver_Params& solv_params_)
             : Microservice(id_, id_str_, communicator_)
         {
-            A = A_;
-            BRf = BRf_;
+    	    name = name_;
+            element = element_;
+            section = section_;
+            network = network_;
 
-            flow_gas = 0;
+    	    flow_gas = 0;
             qm0 = 0;
 
             air = new q(1000 + id_, air_id_str_, communicator_,  name_, element_, section_, network_, 
@@ -89,6 +97,20 @@ namespace G1_1 {
 
             mon_opts = mon_opts_;
             monitoring = new Monitoring(mon_opts_);
+        }
+        
+        // Constructor for model with A, BRf parameters
+        qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
+            string name_, string element_, string section_, string network_,
+            Monitoring_opts* mon_opts_,
+            float S_, float r_, float l_, float A_, float BRf_, Solver_Params& solv_params_)
+            : qm(id_, id_str_, air_id_str_, communicator_,
+        	name_, element_, section_, network_,
+        	mon_opts_,
+        	S_, r_, l_, solv_params_)
+        {
+            A = A_;
+            BRf = BRf_;
         };
         
         // Constructor for model with V parameter
@@ -96,29 +118,12 @@ namespace G1_1 {
             string name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
             float S_, float r_, float l_, float V_, Solver_Params& solv_params_)
-            : Microservice(id_, id_str_, communicator_)
+            : qm(id_, id_str_, air_id_str_, communicator_,
+        	name_, element_, section_, network_,
+        	mon_opts_,
+        	S_, r_, l_, solv_params_)
         {
             V = V_;
-
-            flow_gas = 0;
-            qm0 = 0;
-
-            air = new q(1000 + id_, air_id_str_, communicator_,  name_, element_, section_, network_, 
-        		S_, r_, l_, solv_params_);
-        		
-    	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 1 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 2 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 3 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 4 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 5 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 6 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 7 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 8 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
-
-            mon_opts = mon_opts_;
-            monitoring = new Monitoring(mon_opts_);
         };
         
         void init_monitoring() {
@@ -132,8 +137,8 @@ namespace G1_1 {
             	    output_air->open("output/" + id_str + "_air.csv", ios::out);
             	    output_gas->open("output/" + id_str + "_gas.csv", ios::out);
 
-            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
-            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;qm" << endl;
+            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_air" << endl;
+            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_gas" << endl;
             	}
             }   
         }

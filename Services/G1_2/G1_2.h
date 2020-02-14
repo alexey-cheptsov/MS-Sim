@@ -41,6 +41,11 @@ namespace G1_2 {
      */
     class qmt: public Microservice {
     public:
+	// Description of the element's environment
+        string name="";
+        string element="";
+        string section ="";
+        string network="";
     
 	// Funtional dependencies
 	q* air;
@@ -61,6 +66,11 @@ namespace G1_2 {
             float S_, float r_, float l_, Solver_Params& solv_params_)
             : Microservice(id_, id_str_, communicator_)
         {
+    	    name = name_;
+            element = element_;
+            section = section_;
+            network = network_;
+
             flow_gas = 0;
             flow_gas_sensor = 0;
             
@@ -93,8 +103,8 @@ namespace G1_2 {
             	    output_air->open("output/" + id_str + "_air.csv", ios::out);
             	    output_gas->open("output/" + id_str + "_gas.csv", ios::out);
 
-            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
-            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;qmt" << endl;
+            	    *output_air << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_air" << endl;
+            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;" + name + "_gas" << endl;
             	}
             }
         }

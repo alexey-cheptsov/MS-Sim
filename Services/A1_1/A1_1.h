@@ -111,13 +111,10 @@ namespace A1_1 {
 	  string name_, string element_, string section_, string network_,
 	  Monitoring_opts* mon_opts_,
 	  float S_, float r_, float l_, Solver_Params& solv_params_)
-		: q(id_, id_str_, communicator_, S_, r_, l_, solv_params_)
+		: q(id_, id_str_, communicator_, 
+		name_, element_, section_, network_,
+		S_, r_, l_, solv_params_)
         {
-    	    name = name_;
-            element = element_;
-            section = section_;
-            network = network_;
-            
             mon_opts = mon_opts_;
 	    monitoring = new Monitoring(mon_opts_);
 	};
@@ -134,7 +131,7 @@ namespace A1_1 {
         	    monitoring->fout_1 = output;
         	
             	    output->open("output/" + id_str + ".csv", ios::out);
-	    	    *output << "ExperimentID;Network;Section;Element;@timestamp;q" << endl;
+	    	    *output << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
 		}
     	    }
 	}

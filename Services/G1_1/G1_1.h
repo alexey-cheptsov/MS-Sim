@@ -177,6 +177,12 @@ namespace G1_1 {
 
 	    float qm_old = flow_gas;
             air->solver->solve(&flow_gas, k1_qm, k2_qm, k3_qm, k4_qm);
+            
+            /*
+             * Work-around to limit disturbance by too quickly growing airflows
+             */
+            if (fabs(qm_old-flow_gas) > 0.1)
+        	flow_gas = qm_old + 0.001;
 
     	    //if (id_str == "Q_AM_qm0") {
             //    stringstream out;

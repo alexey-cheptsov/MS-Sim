@@ -265,6 +265,7 @@ namespace G1_2 {
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
+		air->monitoring->data_flush(air->id_str); 
 		monitoring->data_flush(id_str);
 		
 		if (mon_opts->flag_output_file) {

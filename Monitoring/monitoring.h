@@ -439,7 +439,6 @@ public:
     {
 	
 	int count_lines=0;
-	int i;
 	char c;
 	char labels[30][100];
 	char values[30][100];
@@ -449,72 +448,75 @@ public:
 	int num_char=0;
 
         if ((mon_opts->flag_output_uri) && (!mon_opts->flag_output_file)) {
-		cout << "msg is:" << json_msg << endl;	
+	    cout << "msg is:" << json_msg << endl;	
 	    publish_json(convert_comand(bulk), json_msg);
 	} 
-	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)){
-		    if (fout_2 == nullptr) {
-			*fout_1 << ss.str()<< endl;		
-		    } else {
-			*fout_1 << ss.str() << endl;
-			*fout_2 << ssg.str() << endl;
-		    }
+	
+	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)) {
+	    *fout_1 << ss.str() << endl;
 	    
 	    string full_path = "./output/";
 	    full_path.append(id_str);
 	    full_path.append(".csv");
 	    ifstream infile(full_path);
-	
-	    while ((c = infile.get()) != EOF) {	    
-		if(( fcounter ==0))  {
-		    if (  (c==';' || c=='\n')) {
-			num_label++;
-			num_char=0;
-			labels[num_label][num_char]='\0';
-		    }
 	    
-		    if ((c!=';')&& (c!=10)) {
-		        labels[num_label][num_char]=c;
-		        labels[num_label][num_char+1]='\0';
-		        num_char=num_char+1;
-		    }
+	    int finish = 0;
+	    while (!finish) {	
+        	c = infile.get();
+        	
+        	if (c == EOF) {	
+        	    finish = 1;
+        	} else {   
+		    if(( fcounter ==0))  {
+			if (  (c==';' || c=='\n')) {
+			    num_label++;
+    			    num_char=0;
+			    labels[num_label][num_char]='\0';
+			}
+	    
+			if ((c!=';')&& (c!=10)) {
+			    labels[num_label][num_char]=c;
+			    labels[num_label][num_char+1]='\0';
+		    	    num_char=num_char+1;
+			}
 		
-		    if(c=='\n') {
-		        fcounter ++;
-		        num_label=0;
-		        num_char=0;
-		        values[num_label][num_char]='\0';
-		    }
-		} else {
-		    if ((c==';' || c=='\n')){
-		        num_label++;
-		        num_char=0;
-		        values[num_label][num_char]='\0';
-		    }
+			if(c=='\n') {
+		    	    fcounter ++;
+		    	    num_label=0;
+		    	    num_char=0;
+		    	    values[num_label][num_char]='\0';
+			}
+		    } else {
+			if ((c==';' || c=='\n')){
+		    	    num_label++;
+		    	    num_char=0;
+		    	    values[num_label][num_char]='\0';
+			}
 		
-		    if( (c!=';') && (c!=10)){
-		        values[num_label][num_char]=c;
-		        values[num_label][num_char+1]='\0';
-		        num_char=num_char+1;
-		    }
+			if( (c!=';') && (c!=10)){
+		    	    values[num_label][num_char]=c;
+		    	    values[num_label][num_char+1]='\0';
+		    	    num_char=num_char+1;
+			}
 		    
-		    if(c=='\n') {
-			cout << "were here" << endl;
-		        sprintf(j_msg,"{");
+			if(c=='\n') {
+			    cout << "were here" << endl;
+		    	    sprintf(j_msg,"{");
 		    
-		        for(i=0;i<num_label;i++) {
-			    if(i>0) sprintf(j_msg,"%s,",j_msg);
-			    sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
-		        }
+		    	    for(int i=0;i<num_label;i++) {
+				if(i>0) sprintf(j_msg,"%s,",j_msg);
+				sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
+		    	    }
 		
-		        sprintf(j_msg,"%s}\n",j_msg);
-	     		//printf(" msg is %s",j_msg);		
+		    	    sprintf(j_msg,"%s}\n",j_msg);
+	     		    //printf(" msg is %s",j_msg);		
 					    
-			if (mon_opts->flag_output_uri)
+			    if (mon_opts->flag_output_uri)
 				publish_json(convert_comand(post), j_msg);
 				    
-			num_label=0;
-			count_lines++;
+			    num_label=0;
+			    count_lines++;
+			}
 		    }
 		}
 	    } 

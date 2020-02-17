@@ -299,13 +299,13 @@ namespace G1_1 {
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
-		air->monitoring->data_flush(air->id_str);
-		monitoring->data_flush(id_str);
-		
 		if (mon_opts->flag_output_file) {
 		    air->output->close();
 		    output_gas->close();
 		}
+		
+		air->monitoring->data_flush(air->id_str);
+		monitoring->data_flush(id_str);
 	    }
 	    
 	    stringstream out;

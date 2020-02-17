@@ -280,10 +280,10 @@ namespace A1_2 {
 
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
-		monitoring->data_flush(id_str);
-		
 		if (mon_opts->flag_output_file)
 		    output->close();
+	    
+		monitoring->data_flush(id_str);
 	    }
 	
 	    stringstream out;

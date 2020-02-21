@@ -232,14 +232,25 @@ namespace G1_2 {
 
                 // storing q and qm
                 if (monitoring != nullptr) {
-            	    air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
+            	    if (mon_opts->flag_is_realtime) {
+            		air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
             	    
-		    air->monitoring->add_entry(air->network, air->section, air->element, air->name, 
-				      air->time_ms.time_stamp(), 
-				      air->flow);
-		    monitoring->add_entry(network, section, element, name, 
-				      air->time_ms.time_stamp(), 
-				      flow_gas);
+			air->monitoring->add_entry(air->network, air->section, air->element, air->name, 
+					      air->time_ms.time_stamp(), 
+					      air->flow);
+			monitoring->add_entry(network, section, element, name, 
+					      air->time_ms.time_stamp(), 
+					      flow_gas);
+		    } else {
+			air->time_ms_relative += air->solver->h; // incrementing time counter
+			
+			air->monitoring->add_entry(air->network, air->section, air->element, air->name,
+                                                   air->time_ms_relative,
+                                                   air->flow);
+                        monitoring->add_entry(network, section, element, name,
+                                              air->time_ms_relative,
+                                              flow_gas);
+		    }
 		}
             }
 	}
@@ -251,16 +262,28 @@ namespace G1_2 {
     	    cout << out.str();
 
 	    // output to data layer
-	    if (monitoring != nullptr) {    	    
-		air->time_ms.init_time();
-		
-        	air->monitoring->add_entry(air->network, air->section, air->element, air->name,
-            	                      air->time_ms.time_stamp(), 
-            	                      air->flow);
-            	monitoring->add_entry(network, section, element, name,
-            	                      air->time_ms.time_stamp(), 
-            	                      flow_gas);
+	    if (monitoring != nullptr) {
+                if (mon_opts->flag_is_realtime) {
+                    air->time_ms.init_time();
+            
+                    air->monitoring->add_entry(air->network, air->section, air->element, air->name,
+                                          air->time_ms.time_stamp(),
+                                          air->flow);
+                    monitoring->add_entry(network, section, element, name,
+                                          air->time_ms.time_stamp(),
+                                          flow_gas);
+                } else {
+                    air->monitoring->add_entry(air->network, air->section, air->element, air->name,
+                                          air->time_ms_relative,
+                                          air->flow);
+                    monitoring->add_entry(network, section, element, name,
+                                          air->time_ms_relative,
+                                          flow_gas);
+                }
             }
+
+
+
 	}
 	
 	virtual void command__stop() {

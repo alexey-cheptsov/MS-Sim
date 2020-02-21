@@ -30,6 +30,8 @@ using namespace std;
 class Monitoring_opts {
 public:
     string experiment_id 	= "2019-01-01T00:00:00.000";
+    
+    bool flag_is_realtime	= 0;
     bool flag_output_file 	= 0;
     bool flag_output_display	= 0;
     bool flag_output_uri 	= 0;
@@ -367,6 +369,40 @@ public:
 		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
 		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
 		       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << name 
+		       << "\":" << value << "}" << endl;	
+		    
+		    string s = ss.str();
+		    json_msg = new char [s.length()+1];
+		    strcpy (json_msg, s.c_str());
+	    }
+	    counter++;
+	    
+	    if (counter == mon_opts->buf_size){				    
+	    	if (mon_opts->flag_output_file){
+			*fout_1 << ss.str();
+		}
+		else{
+			if (mon_opts->flag_output_uri){
+				publish_json(convert_comand(bulk), json_msg);
+			}
+		}
+	    ss.str("");
+	    counter = 0;
+	    }    
+    }
+    
+    void add_entry(string net, string sec, string elem, string name, float timestamp, float value)
+    {
+	    if (mon_opts->flag_output_file){
+		    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\"" 
+		       << elem << "\";" << timestamp << ";" << value << endl;
+
+	    }
+	    else{
+		    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
+		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
+		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
+		       << elem << "\",\"@timestamp\":" << timestamp << ",\"" << name 
 		       << "\":" << value << "}" << endl;	
 		    
 		    string s = ss.str();

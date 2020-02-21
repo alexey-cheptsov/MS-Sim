@@ -64,6 +64,7 @@ namespace A1_2 {
 	
 	// Monitoring properties
         Time_MS time_ms;
+        float time_ms_relative;     // time stamp for relative time option
         Monitoring* monitoring = nullptr;
         Monitoring_opts* mon_opts;
         fstream* output = nullptr;
@@ -325,9 +326,15 @@ namespace A1_2 {
 
 		// storing results
                 if (monitoring != nullptr) {
-                    time_ms.increment_time_ms(solver->h); // incrementing time counter
-	            monitoring->add_entry(network, section, element, name,
-                                          time_ms.time_stamp(), pressure);		
+            	    if (mon_opts->flag_is_realtime) {
+                	time_ms.increment_time_ms(solver->h); // incrementing time counter
+	        	monitoring->add_entry(network, section, element, name,
+                    	                      time_ms.time_stamp(), pressure);		
+                    } else {
+                	time_ms_relative += solver->h;
+                        monitoring->add_entry(network, section, element, name,
+                                          time_ms_relative, pressure);
+                    }
                 }
             }
 	};
@@ -340,9 +347,14 @@ namespace A1_2 {
     	    
     	    // output to data layer
             if (monitoring != nullptr) {
-        	time_ms.init_time();
-	        monitoring->add_entry(network, section, element, name,
-                                      time_ms.time_stamp(), pressure);		
+        	if (mon_opts->flag_is_realtime) {
+        	    time_ms.init_time();
+	    	    monitoring->add_entry(network, section, element, name,
+                	                  time_ms.time_stamp(), pressure);		
+                } else {
+            	    monitoring->add_entry(network, section, element, name,
+                                          time_ms_relative, pressure);
+                }
             }	
 	};
 	
@@ -354,7 +366,10 @@ namespace A1_2 {
 	
 	
 	virtual void command__init_time() {
-            time_ms.init_time();
+	    if (mon_opts->flag_is_realtime)
+                time_ms.init_time();
+            else
+        	time_ms_relative = 0;
         }
         
 	

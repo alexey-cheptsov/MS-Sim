@@ -495,6 +495,7 @@ int main (int argc, char* argv[]) {
     
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = experiment_id;
+    mon_opts->flag_is_realtime  = 0;
     mon_opts->flag_output_file  = 1;
     mon_opts->buf_size 		= 10;
 

@@ -98,7 +98,36 @@ namespace G1_1 {
             air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
 
             mon_opts = mon_opts_;
-            monitoring = new Monitoring(mon_opts_);
+    	    monitoring = new Monitoring(mon_opts_);
+        }
+        
+        qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
+            string name_, string air_name_, string element_, string section_, string network_,
+            float S_, float r_, float l_, Solver_Params& solv_params_)
+            : Microservice(id_, id_str_, communicator_)
+        {
+    	    name = name_;
+    	    air_name = air_name_;
+            element = element_;
+            section = section_;
+            network = network_;
+
+    	    flow_gas = 0;
+            qm0 = 0;
+
+            air = new q(1000 + id_, air_id_str_, communicator_,  air_name_, element_, section_, network_, 
+        		S_, r_, l_, solv_params_);
+        		
+    	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 1 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 2 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 3 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 4 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 5 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 6 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 7 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 8 /*port*/, communicator));
+            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
         }
         
         // Constructor for model with A, BRf parameters
@@ -109,6 +138,17 @@ namespace G1_1 {
             : qm(id_, id_str_, air_id_str_, communicator_,
         	name_, air_name_, element_, section_, network_,
         	mon_opts_,
+        	S_, r_, l_, solv_params_)
+        {
+            A = A_;
+            BRf = BRf_;
+        };
+        
+        qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
+            string name_, string air_name_, string element_, string section_, string network_,
+            float S_, float r_, float l_, float A_, float BRf_, Solver_Params& solv_params_)
+            : qm(id_, id_str_, air_id_str_, communicator_,
+        	name_, air_name_, element_, section_, network_,
         	S_, r_, l_, solv_params_)
         {
             A = A_;
@@ -127,6 +167,17 @@ namespace G1_1 {
         {
             V = V_;
         };
+        
+        qm(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
+            string name_, string air_name_, string element_, string section_, string network_,
+            float S_, float r_, float l_, float V_, Solver_Params& solv_params_)
+            : qm(id_, id_str_, air_id_str_, communicator_,
+        	name_, air_name_, element_, section_, network_,
+        	S_, r_, l_, solv_params_)
+        {
+            V = V_;
+        };
+
         
         void init_monitoring() {
     	    if (monitoring != nullptr) {

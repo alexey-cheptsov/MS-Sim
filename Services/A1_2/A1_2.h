@@ -66,7 +66,7 @@ namespace A1_2 {
         Time_MS time_ms;
         float time_ms_relative;     // time stamp for relative time option
         Monitoring* monitoring = nullptr;
-        Monitoring_opts* mon_opts;
+        Monitoring_opts* mon_opts = nullptr;
         fstream* output = nullptr;
 
 	p(int id_, string id_str_, float S_, float dx_, bool is_boundary_, Solver_Params solv_params_) 
@@ -97,6 +97,18 @@ namespace A1_2 {
             
             nr_q_in = communicator->get_nr_comm_links_by_receiver(id, id_str, Ports_p::num_set_qin);
             nr_q_out = communicator->get_nr_comm_links_by_receiver(id, id_str, Ports_p::num_set_qout);
+	};
+	
+	p(int id_, string id_str_, Communicator* communicator_, 
+	  string name_, string element_, string section_, string network_,
+	  float S_, float dx_, bool is_boundary_, Solver_Params solv_params_) 
+	    : p(id_, id_str_, communicator_, S_, dx_, is_boundary_, solv_params_)
+
+	{
+	    name = name_;
+            element = element_;
+            section = section_;
+            network = network_;
 	};
 	
 	p(int id_, string id_str_, Communicator* communicator_, 
@@ -366,10 +378,11 @@ namespace A1_2 {
 	
 	
 	virtual void command__init_time() {
-	    if (mon_opts->flag_is_realtime)
-                time_ms.init_time();
-            else
-        	time_ms_relative = 0;
+	    if (monitoring != nullptr)
+		if (mon_opts->flag_is_realtime)
+            	    time_ms.init_time();
+        	else
+        	    time_ms_relative = 0;
         }
         
 	

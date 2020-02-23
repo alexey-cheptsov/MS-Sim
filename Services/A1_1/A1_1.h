@@ -68,7 +68,7 @@ namespace A1_1 {
 	Time_MS time_ms; // time stamp for real-time option
 	float time_ms_relative;     // time stamp for relative time option
 	Monitoring* monitoring = nullptr;
-	Monitoring_opts* mon_opts;
+	Monitoring_opts* mon_opts = nullptr;
 	fstream* output = nullptr; 	// output file for q
 	
 	// Constants
@@ -338,10 +338,11 @@ namespace A1_1 {
 	}
     
 	virtual void command__init_time() {
-	    if (mon_opts->flag_is_realtime)
-		time_ms.init_time();
-	    else
-		time_ms_relative = 0;
+	    if (monitoring != nullptr)
+		if (mon_opts->flag_is_realtime)
+		    time_ms.init_time();
+		else
+		    time_ms_relative = 0;
 	}
 	
 	void run() {

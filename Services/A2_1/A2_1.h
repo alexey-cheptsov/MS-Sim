@@ -65,7 +65,7 @@ namespace A2_1 {
     		} else {
     		    qq[i] = new q(i+1/*id*/, id_str + "_q" + to_string(i), communicator_,
     			      "q" + to_string(i), element_, section_, network_,
-    			      /* mon_opts_, */
+    			      mon_opts_,
     			      S_ /*S*/, R_/L_ /*r*/, L_/N /*l*/, solv_params_);
     		}
     
@@ -78,7 +78,7 @@ namespace A2_1 {
     		} else {
     		    pp[i] = new p(N+(i+1)/*id*/, id_str + "_p" + to_string(i), communicator_,
     			      "p" + to_string(i), element_, section_, network_,
-    			      /* mon_opts_, */
+    			      mon_opts_,
     			      S_ /*S*/, L_/N /*dX*/, false /*is_boundary*/, solv_params_);
 		}
 	    	    

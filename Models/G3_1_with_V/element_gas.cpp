@@ -606,30 +606,30 @@ int main (int argc, char* argv[]) {
     // parameters of Q-elements
     //
         // OS
-    float OS_S = 7.0;   // square cut
-    float OS_R = 0.24;  // resistance
-    float OS_L = 500;   // length
+    float OS_S = 7.0;   	// square cut
+    float OS_R = 0.24;		// resistance
+    float OS_L = 500;   	// length
         // Streb
-    float Streb_S = 2.3;   // square cut
-    float Streb_R = 6.61;  // resistance
-    float Streb_L = 130;   // length
+    float Streb_S = 2.3;   	// square cut
+    float Streb_R = 4.0;  	// resistance
+    float Streb_L = 130;   	// length
         // AM
-    float AM_S = 2.3;    // square cut
-    float AM_R = 81  ;   // resistance
-    float AM_L = 130;    // length
-    float AM_V = 1000.0; // specific volume of FR per discrete element
+    float AM_S = 2.3;    	// square cut
+    float AM_R = 49; 	  	// resistance
+    float AM_L = 130;    	// length
+    float AM_V = 1000.0; 	// specific volume of FR per discrete element
     float AM_Qm0 = 0.0175;
         // VS
-    float VS_S = 5.5;   // square cut
-    float VS_R = 0.44;  // resistance
-    float VS_L = 500;   // length
+    float VS_S = 5.5;   	// square cut
+    float VS_R = 0.44;  	// resistance
+    float VS_L = 500;   	// length
 
     float dX = 50;
 
 
     // parameters of P-elements
     float H_start = 0;
-    float H_end = 242.6;
+    float H_end = 160.69;
             
     // numeric parameters
     Solver_Params solv_params = { 0.15        /*time step in s.*/,

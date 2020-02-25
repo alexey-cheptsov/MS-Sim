@@ -566,7 +566,7 @@ namespace G3_1 {
             proxy_flush_collective_replicate(Proxies_AM::set_Q);
             proxy_clear(Proxies_AM::set_Q);
 
-            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Q::set_Q /*value*/);
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::set_Q /*value*/);
             proxy_flush_collective_replicate(Proxies_AM::command_flow);
             proxy_clear(Proxies_AM::command_flow);
 

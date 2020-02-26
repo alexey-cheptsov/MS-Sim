@@ -456,13 +456,69 @@ public:
 	}
 	set_Q_VS(q_VS);
 	
-
-	bool is_converged = false;
+	
 	int num_step = 0;
-
 	init_time();
 
-	// Simulation
+	//
+	// Simulation part 1 - change of P
+	//
+	bool is_converged = false;
+	while ( !is_converged ) {
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q_VS(q_VS);
+
+    	    is_converged = true;
+    	    
+    	    if (fabs(q_VS[0]-q_VS_old[0]) > solv_params.precision)
+                is_converged = false;
+            	
+    	    q_VS_old[0] = q_VS[0];
+	}
+
+	//
+	// Simulation part 2 - raise of r_reg
+	//
+	
+	float r_reg = 25.0;
+	
+	for (int i=0; i<N_VS; i++)
+	    r_reg_VS[i] = r_reg;
+	set_R_reg_VS(r_reg_VS);
+	
+	is_converged = false;
+	while ( !is_converged ) {
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q_VS(q_VS);
+
+    	    is_converged = true;
+    	    
+    	    if (fabs(q_VS[0]-q_VS_old[0]) > solv_params.precision)
+                is_converged = false;
+            	
+    	    q_VS_old[0] = q_VS[0];
+	}
+
+
+	//
+	// Simulation part 3 - drop of r_reg
+	//
+	
+	r_reg = 5.0;
+	
+	for (int i=0; i<N_VS; i++)
+	    r_reg_VS[i] = r_reg;
+	set_R_reg_VS(r_reg_VS);
+	
+	is_converged = false;
 	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
@@ -530,7 +586,7 @@ int main (int argc, char* argv[]) {
             
     // numeric parameters
     Solver_Params solv_params = { 0.15        /*time step in s.*/,
-                                  0.000001    /*precision*/,
+                                  0.0001    /*precision*/,
                                   30          /*nr. of numeric steps in sim block*/  };
     
     // Deployment options

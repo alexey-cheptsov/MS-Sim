@@ -204,6 +204,10 @@ namespace G1_2 {
     	    air->r_reg = get_buffer_value<float>(Ports_qmt::set_r_reg, 0);
     	    buffer_clear(Ports_qmt::set_r_reg);
     	    
+    	    air->alfa = (air->S)   / (air->ro * air->l);
+            air->beta = (air->S*(air->r+air->r_reg)) / (air->ro);
+
+    	    
     	    stringstream out;
     	    out << "ms_" << id << "(" << id_str << "): Initialized r_reg=" << air->r_reg << endl;
     	    cout << out.str();

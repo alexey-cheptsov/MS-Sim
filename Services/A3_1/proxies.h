@@ -10,8 +10,6 @@
 #define A3_1_PROXIES_H
 
 #include "../A2_1/ports.h" // Q
-#include "../G2_1/ports.h" // Qm
-#include "../G2_2/ports.h" // Qmt
 #include "../A1_2/ports.h" // P
 
 namespace A3_1 {

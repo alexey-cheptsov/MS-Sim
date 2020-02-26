@@ -249,6 +249,9 @@ namespace A1_1 {
     	    stringstream out;
     	    out << "ms_" << id << "(" << id_str << "): Initialized r_reg=" << r_reg << endl;
     	    cout << out.str();
+    	    
+    	    alfa = (S)   / (ro * l);
+    	    beta = (S*(r+r_reg)) / (ro);
 	}
         
 	virtual void command__get_q() {

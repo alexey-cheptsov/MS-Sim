@@ -48,6 +48,7 @@ namespace G3_1 {
 	
 	DeploymentPool* deployment_pool;
 	
+	// Constructor for A, BRf parameters
 	QQmt(int id_, string id_str_, MpiCommunicator* communicator_, 
 		string section_, string network_,
 		Monitoring_opts* mon_opts_,
@@ -119,6 +120,7 @@ namespace G3_1 {
 	    deployment_pool->deploy_all();
 	}
 	
+	// Constructor for V parameter
 	QQmt(int id_, string id_str_, MpiCommunicator* communicator_, 
 		string section_, string network_,
 		Monitoring_opts* mon_opts_,
@@ -154,7 +156,7 @@ namespace G3_1 {
                     "AM" /*element*/, section_, network_,
                     mon_opts_,
                     AM_S_ /*S*/, AM_R_ /*R*/, AM_L_ /*L*/, dX_,
-                    AM_V_, solv_params_);
+                    AM_V_/N_AM, solv_params_);
 		
 	    Q_VS = new Qmt(5/*id*/, "Q_VS", communicator_,
                     "VS" /*element*/, section_, network_,
@@ -698,6 +700,38 @@ namespace G3_1 {
             out << "}" << endl;
             cout << out.str();
         }
+        
+        virtual void command__set_R_reg_VS() {
+            stringstream out;
+
+            float value[N_VS];
+
+            // Receive value from Master
+            buffer_sync(Ports_QQmt::set_R_reg_VS);
+
+            for (int i=0; i<N_VS; i++)
+                value[i] = get_buffer_value<float>(Ports_QQmt::set_R_reg_VS, i/*index*/); // q[0..N]
+            buffer_clear(Ports_QQmt::set_R_reg_VS);
+
+            //
+            //Propagation to underlying Q's
+            //
+            out << "ms_" << id << "(" << id_str << "): Initialized rreg_VS = {";
+            for (int i=0; i<N_VS; i++) {
+                out << value[i] << ", ";
+                add_proxy_value<float>(Proxies_VS::set_R_reg, value[i] /*value*/);
+            }
+            proxy_flush_collective_replicate(Proxies_VS::set_R_reg);
+            proxy_clear(Proxies_VS::set_R_reg);
+
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Qmt::set_R_reg /*value*/);
+            proxy_flush_collective_replicate(Proxies_VS::command_flow);
+            proxy_clear(Proxies_VS::command_flow);
+
+            out << "}" << endl;
+            cout << out.str();
+        }
+
 
         
         virtual void command__get_Q_OS() {
@@ -787,6 +821,29 @@ namespace G3_1 {
             buffer_flush_collective_gather(Ports_QQmt::get_Q_VS);
             buffer_clear(Ports_QQmt::get_Q_VS);
         }
+        
+        virtual void command__get_R_reg_VS() {
+            stringstream out;
+        
+            float value[N_VS];
+        
+            // Receive value from underlying q's
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Q::get_R_reg /*value*/);
+            proxy_flush_collective_replicate(Proxies_VS::command_flow);
+            proxy_clear(Proxies_VS::command_flow);
+
+            proxy_sync(Proxies_VS::get_Q);
+            for (int i=0; i<N_VS; i++)
+                value[i] = get_proxy_value<float>(Proxies_VS::get_R_reg, i /*index*/);
+            proxy_clear(Proxies_VS::get_R_reg);
+            
+            // Sending to Master
+            for (int i=0; i<N_VS; i++)
+                add_buffer_value<float>(Ports_QQmt::get_R_reg_VS, value[i] /*value*/);
+            buffer_flush_collective_gather(Ports_QQmt::get_R_reg_VS);
+            buffer_clear(Ports_QQmt::get_R_reg_VS);
+        }
+
 
         virtual void command__get_Qm_AM() {
     	    stringstream out;
@@ -983,6 +1040,13 @@ namespace G3_1 {
                         break;
                     }
                     
+                    // 9
+                    case Commands_QQmt::set_R_reg_VS: {
+                        command__set_R_reg_VS();
+                        break;
+                    }
+
+                    
                     // ...
         
                     
@@ -1018,6 +1082,13 @@ namespace G3_1 {
                     
                     
                     // ...
+                    
+                    // 19
+                    case Commands_QQmt::get_R_reg_VS: {
+                        command__get_R_reg_VS();
+                        break;
+                    }
+
                     
                     // 20
                     case Commands_QQmt::simulation: {

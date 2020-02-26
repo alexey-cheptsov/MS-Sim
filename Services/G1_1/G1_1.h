@@ -234,8 +234,11 @@ namespace G1_1 {
             /*
              * Work-around to limit disturbance by too quickly growing airflows
              */
-            if (fabs(qm_old-flow_gas) > 0.1)
-        	flow_gas = qm_old + 0.001;
+            if ((qm_old-flow_gas) > 0.01)
+        	flow_gas = qm_old - 0.0001;
+    	    if ((flow_gas-qm_old) > 0.01)
+        	flow_gas = qm_old + 0.0001;
+        	
 
     	    //if (id_str == "Q_AM_qm0") {
             //    stringstream out;

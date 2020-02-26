@@ -32,6 +32,7 @@ namespace G2_2 {
     public:
     
 	int N;		// nr. of approx_elements
+	float L;
 	
 	qmt** qq;	// underlying MS
 	p**   pp;
@@ -46,6 +47,7 @@ namespace G2_2 {
 		: Microservice(id_, id_str_, communicator_) 
         {
 	    N = std::round(L_/dX_);
+	    L = L_;
     	    float dX = L_/N;   // correction of deltaX value
     	    
     	    // Setup of communication map
@@ -347,8 +349,10 @@ namespace G2_2 {
             // Receive value from Master
 	    buffer_sync(Ports_Qmt::set_R_reg);
     	    float value[N];
-            for (int i=0; i<N; i++)
-    	    value[i] = get_buffer_value<float>(Ports_Qmt::set_R_reg, i/*index*/); // q[0..N]
+            for (int i=0; i<N; i++) {
+    		value[i] = get_buffer_value<float>(Ports_Qmt::set_R_reg, i/*index*/); // q[0..N]
+    		value[i] = value[i]/L; // obtaining specific value of r_reg
+    	    }
             buffer_clear(Ports_Qmt::set_R_reg);
 
             //Propagation to underlying q's

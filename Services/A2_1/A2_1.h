@@ -32,6 +32,7 @@ namespace A2_1 {
     public:
     
 	int N;		// nr. of approx_elements
+	float L;	// length
 	
 	q** qq;		// underlying MS
 	p** pp;
@@ -45,6 +46,7 @@ namespace A2_1 {
 		: Microservice(id_, id_str_, communicator_) 
         {
 	    N = std::round(L_/dX_);
+	    L = L_;
     	    float dX = L_/N;   // correction of deltaX value
     	    
     	    // Setup of communication map
@@ -156,9 +158,12 @@ namespace A2_1 {
                                                      id_str + "_p" + to_string(i) /*rcv_id*/, Ports_p::command_flow));
         
             // Data Flow Master->Q
-            for (int i=0; i<N; i++)
+            for (int i=0; i<N; i++) {
         	communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_q::set_q  + proxy_disp /*port*/,
                                                      id_str + "_q" + to_string(i) /*rcv_id*/, Ports_q::set_q));
+                communicator->add_comm_link(new CommLink(master /*snd_id*/, Proxies_q::set_r_reg  + proxy_disp /*port*/,
+                                                     id_str + "_q" + to_string(i) /*rcv_id*/, Ports_q::set_r_reg));
+    	    }
         
             // Data Flow Master->P
             for (int i=0; i<N-1; i++)
@@ -287,13 +292,18 @@ namespace A2_1 {
 
 	    // Receive value from Master
 	    buffer_sync(Ports_Q::set_R_reg);
-            float R_reg_set = get_buffer_value<float>(Ports_Q::set_R_reg, 0/*index*/); // r_reg[0..N]
+	    float value[N];
+	    for (int i=0; i<N; i++) {
+		value[i] = get_buffer_value<float>(Ports_Q::set_R_reg, i/*index*/); // r_reg[0..N]
+		value[i] = value[i]/L; // obtaining specific value of r_reg
+	    }
             buffer_clear(Ports_Q::set_R_reg);
 
             //Propagation to underlying q's
+
             for (int i=0; i<N; i++) {
-                out << R_reg_set << ", ";
-                add_proxy_value<float>(Proxies_q::set_r_reg, R_reg_set /*value*/);
+                out << value[i] << ", ";
+                add_proxy_value<float>(Proxies_q::set_r_reg, value[i] /*value*/);
             }
             proxy_flush_collective_spread(Proxies_q::set_r_reg);
             proxy_clear(Proxies_q::set_r_reg);
@@ -305,6 +315,7 @@ namespace A2_1 {
             out << "}" << endl;
             cout << out.str();
         }
+
         
         virtual void command__get_Q() {
             float q[N];

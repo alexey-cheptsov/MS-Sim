@@ -149,10 +149,11 @@ void MpiCommunicator::flush_collective_spread(int ms_id, string ms_id_str, int p
     vector<CommLink*> destinations = get_comm_links_by_sender(ms_id, ms_id_str, port);
     // TO-DO: Error handling when no destinations available (wrong comm map)
     LocalBuffer* snd_buf = get_src_buffer(destinations[0]);
-    int nr_entries_per_dest = snd_buf->get_size() / destinations.size();
 
     LocalIntBuffer*     int_snd_buf = dynamic_cast<LocalIntBuffer*>(snd_buf);
     LocalFloatBuffer* float_snd_buf = dynamic_cast<LocalFloatBuffer*>(snd_buf);
+    
+    int counter = 0;
     
     for (int i=0; i<destinations.size(); i++) {
     
@@ -160,24 +161,25 @@ void MpiCommunicator::flush_collective_spread(int ms_id, string ms_id_str, int p
 	int dest_mpi_rank = mpi_map.get_mpi_rank(dest_ms_id_str);
 	int dest_port = destinations[i]->rcv_port;
 	
-	for (int j=0; j<nr_entries_per_dest; j++) {
-	    int value_index_in_snd_buf = i*nr_entries_per_dest + j;
-	
+	for (int j=0; j<destinations[i]->size; j++)
 	    if (int_snd_buf) {
-    		int value = int_snd_buf->get_int_value(value_index_in_snd_buf /*index*/);
+    		int value = int_snd_buf->get_int_value(counter /*index*/);
 		int tag = mpi_map.get_tag_by_receiver(dest_ms_id_str, dest_port);
     		
     		send_int_value(value, dest_mpi_rank, tag);
     		//cout << "Rank " << mpi_rank << ": MPI_Send: " << ms_id_str << ":" << port << " --{" << value << "}--> " << dest_ms_id_str << ":" << dest_port << " (mpi_rank = " << dest_mpi_rank << ", tag = " << tag << ")"<< endl;
+    		
+    		counter++;
     	    }
 	    else if (float_snd_buf) {
-    		float value = float_snd_buf->get_float_value(value_index_in_snd_buf /*index*/);
+    		float value = float_snd_buf->get_float_value(counter /*index*/);
 		int tag = mpi_map.get_tag_by_receiver(dest_ms_id_str, dest_port);
 
     		send_float_value(value, dest_mpi_rank, tag);
     		//cout << "Rank " << mpi_rank << ": MPI_Send: " << ms_id_str << ":" << port << " --{" << value << "}--> " << dest_ms_id_str << ":" << dest_port << " (mpi_rank = " << dest_mpi_rank << ", tag = " << tag << ")"<< endl;
+    		
+    		counter++;
 	    }
-	}
     }
 };
 

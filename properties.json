@@ -1,0 +1,28 @@
+Validation tool:
+https://jsonlint.com/
+
+{
+	"id": "FR_1",
+	"type": "G2.5",
+	"descr": "Filtrationsraum des Ost-Strebs PL-S10",
+
+	"properties": [{
+		"aerodynamik": [{
+			"S": 2.3,
+			"R": 81,
+			"L": 130.0
+		}],
+
+        "methan": [{
+			"V": 2800.0,
+			"Qm0": 0.0175
+		}]
+	}],
+
+    "topology": [{
+        "start": "P0",
+        "end": "P1"
+    }]
+}
+
+

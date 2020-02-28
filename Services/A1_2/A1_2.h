@@ -243,12 +243,11 @@ namespace A1_2 {
 	    float k1_p, k2_p, k3_p, k4_p;
 	    
 	    float h = solver->h;
-	
+
 	    send_p(); // sending p value to the neighboring q-elements
 	
 	    if (!is_boundary) {
 	        recv_q(); // receiving q values from the neighboring q-elements
-	        
 	        // k1
 		k1_p = calc_dp(q_in, q_out);
 		send_k(k1_p);
@@ -446,6 +445,8 @@ namespace A1_2 {
     }; // class p
 
 }; // namespace A1_2
+
+
 
 
 #endif // A1_2_H

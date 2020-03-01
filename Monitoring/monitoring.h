@@ -41,6 +41,12 @@ public:
     char* uri			= "http://localhost:9200/ms/";    
 };
 
+template <typename T> 
+struct Entry_to_save {
+    string id;
+    T value;
+};
+
 class Monitoring {
 public:
     typedef long unsigned int size_t;
@@ -356,6 +362,17 @@ public:
 	    strcat (command, com); 
 	    return command;
     }
+
+    template<typename T>
+    void add_entry(string net, string sec, string elem, string name, string timestamp, vector<Entry_to_save<T>>& entries)
+    {
+	for (int i=0; i<entries.size(); i++) {
+	    //entries[i].id
+	    //entries[i].value
+	}
+	
+    }
+
 
     void add_entry(string net, string sec, string elem, string name, string timestamp, float value)
     {

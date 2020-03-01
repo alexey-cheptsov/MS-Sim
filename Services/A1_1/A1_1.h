@@ -70,6 +70,7 @@ namespace A1_1 {
 	Monitoring* monitoring = nullptr;
 	Monitoring_opts* mon_opts = nullptr;
 	fstream* output = nullptr; 	// output file for q
+	vector<Entry_to_save<float>> entries_to_save;
 	
 	// Constants
 	const float ro = 1.25;
@@ -94,6 +95,9 @@ namespace A1_1 {
     	    beta = (S*r) / (ro);
         
     	    init_solver(solv_params_);
+    	    
+    	    
+    	    entries_to_save.push_back(Entry_to_save<float>()); // q
 	};
 
 	q(int id_, string id_str_, Communicator* communicator_, 
@@ -291,10 +295,24 @@ namespace A1_1 {
             		time_ms.increment_time_ms(solver->h); // incrementing time counter
 			monitoring->add_entry(network, section, element, name, 
 				       	  time_ms.time_stamp(), flow);
+				       	  
+			//
+			//
+			//
+			entries_to_save[0].id = "q";
+			entries_to_save[0].value = flow;
+			monitoring->add_entry<float>(network, section, element, name, 
+				       	  time_ms.time_stamp(), entries_to_save);
+			//
+			//
+			//  
+				       	
 		    } else {
 			time_ms_relative += solver->h;
 			monitoring->add_entry(network, section, element, name, 
 				       	  time_ms_relative, flow);
+				       	  
+			
 		    }
 		}
             }

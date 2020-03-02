@@ -58,8 +58,10 @@ namespace G1_2 {
 	// Monitoring properties
         Monitoring* monitoring = nullptr;
         Monitoring_opts* mon_opts;
-        fstream* output_gas = nullptr;      // output file for qmt
-	
+
+        vector<fstream*> output;        // output files
+        vector<Entry_to_save<float>> entries_to_save;
+
         qmt(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
             string name_, string air_name_, string element_, string section_, string network_,
             Monitoring_opts* mon_opts_,
@@ -76,7 +78,6 @@ namespace G1_2 {
             flow_gas_sensor = 0;
             
             air = new q(1000 + id_, air_id_str_, communicator_,  air_name_, element_, section_, network_,
-        		mon_opts_,
         		S_, r_, l_, solv_params_);
         
     	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
@@ -94,46 +95,24 @@ namespace G1_2 {
 	    monitoring = new Monitoring(mon_opts_);
         };
         
-        qmt(int id_, string id_str_, string air_id_str_, Communicator* communicator_,
-            string name_, string air_name_, string element_, string section_, string network_,
-            float S_, float r_, float l_, Solver_Params& solv_params_)
-            : Microservice(id_, id_str_, communicator_)
-        {
-    	    name = name_;
-    	    air_name = air_name_;
-            element = element_;
-            section = section_;
-            network = network_;
-
-            flow_gas = 0;
-            flow_gas_sensor = 0;
-            
-            air = new q(1000 + id_, air_id_str_, communicator_,  air_name_, element_, section_, network_,
-        		S_, r_, l_, solv_params_);
-        
-    	    air->add_buffer(new LocalIntBuffer  (air->id /*ms_id*/, air->id_str, 0 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 1 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 2 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 3 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 4 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 5 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 6 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 7 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 8 /*port*/, communicator));
-            air->add_buffer(new LocalFloatBuffer(air->id /*ms_id*/, air->id_str, 9 /*port*/, communicator));
-        };
-        
         void init_monitoring() {
-    	    if (monitoring != nullptr) {
-        	if (mon_opts->flag_output_file) {
-            	    output_gas = new fstream();
-            	    monitoring->fout_1 = output_gas;
-
-            	    output_gas->open("output/" + id_str + ".csv", ios::out);
-
-            	    *output_gas << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
-            	}
-            }
+	    if (monitoring != nullptr) {
+                entries_to_save.push_back(Entry_to_save<float>()); // entry for "q"
+                entries_to_save.push_back(Entry_to_save<float>()); // entry for "qm"
+        
+                if (mon_opts->flag_output_file) {
+                    output.push_back(new fstream());            // file for "q"
+                    output.push_back(new fstream());            // file for "qm"
+        
+                    monitoring->fout = output;
+                    
+                    output[0]->open("output/" + air->id_str + ".csv", ios::out);
+                    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + air->name << endl;
+                    
+                    output[1]->open("output/" + id_str + ".csv", ios::out);
+                    *output[1] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+                }
+            }       
         }
 
 
@@ -265,25 +244,25 @@ namespace G1_2 {
 
                 // storing q and qm
                 if (monitoring != nullptr) {
-            	    if (mon_opts->flag_is_realtime) {
-            		air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
-            	    
-			air->monitoring->add_entry(air->network, air->section, air->element, air->name, 
-					      air->time_ms.time_stamp(), 
-					      air->flow);
-			monitoring->add_entry(network, section, element, name, 
-					      air->time_ms.time_stamp(), 
-					      flow_gas);
-		    } else {
-			air->time_ms_relative += air->solver->h; // incrementing time counter
-			
-			air->monitoring->add_entry(air->network, air->section, air->element, air->name,
-                                                   air->time_ms_relative,
-                                                   air->flow);
-                        monitoring->add_entry(network, section, element, name,
+            	    entries_to_save[0].id = air->name;
+                    entries_to_save[0].value = air->flow;
+                
+                    entries_to_save[1].id = name;
+                    entries_to_save[1].value = flow_gas;
+            
+                    if (mon_opts->flag_is_realtime) {
+                        air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
+                    
+                        monitoring->add_entry(network, section, element,
+                                              air->time_ms.time_stamp(),
+                                              entries_to_save);
+                    } else {
+                        air->time_ms_relative += air->solver->h; // incrementing time counter
+                                              
+                        monitoring->add_entry(network, section, element,
                                               air->time_ms_relative,
-                                              flow_gas);
-		    }
+                                              entries_to_save);
+                    }                         
 		}
             }
 	}
@@ -296,37 +275,28 @@ namespace G1_2 {
 
 	    // output to data layer
 	    if (monitoring != nullptr) {
-                if (mon_opts->flag_is_realtime) {
-                    air->time_ms.init_time();
-            
-                    air->monitoring->add_entry(air->network, air->section, air->element, air->name,
+		if (mon_opts->flag_is_realtime) {
+                    air->time_ms.increment_time_ms(air->solver->h); // incrementing time counter
+
+                    monitoring->add_entry(network, section, element,
                                           air->time_ms.time_stamp(),
-                                          air->flow);
-                    monitoring->add_entry(network, section, element, name,
-                                          air->time_ms.time_stamp(),
-                                          flow_gas);
+                                          entries_to_save);
                 } else {
-                    air->monitoring->add_entry(air->network, air->section, air->element, air->name,
+                    air->time_ms_relative += air->solver->h; // incrementing time counter
+
+                    monitoring->add_entry(network, section, element,
                                           air->time_ms_relative,
-                                          air->flow);
-                    monitoring->add_entry(network, section, element, name,
-                                          air->time_ms_relative,
-                                          flow_gas);
+                                          entries_to_save);
                 }
             }
-
-
-
 	}
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
-		if (mon_opts->flag_output_file) {
-		    air->output->close();
-		    output_gas->close();
-		}
-	    
-		air->monitoring->data_flush(air->id_str); 
+		if (mon_opts->flag_output_file)
+		    for (int i=0; i<output.size(); i++)
+                        output[i]->close();
+
 		monitoring->data_flush(id_str);
 	    }
 	
@@ -347,7 +317,6 @@ namespace G1_2 {
 	}
 	
 	void run() {
-	    air->init_monitoring();
 	    init_monitoring();
 	
 	    bool finish = false;

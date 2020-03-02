@@ -65,11 +65,12 @@ namespace A1_1 {
     	float beta;
 	
 	// Monitoring properties
-	Time_MS time_ms; // time stamp for real-time option
-	float time_ms_relative;     // time stamp for relative time option
+	Time_MS time_ms; 		// time stamp for real-time option
+	float time_ms_relative;     	// time stamp for relative time option
 	Monitoring* monitoring = nullptr;
 	Monitoring_opts* mon_opts = nullptr;
-	fstream* output = nullptr; 	// output file for q
+
+	vector<fstream*> output; 	// output files
 	vector<Entry_to_save<float>> entries_to_save;
 	
 	// Constants
@@ -97,7 +98,7 @@ namespace A1_1 {
     	    init_solver(solv_params_);
     	    
     	    
-    	    entries_to_save.push_back(Entry_to_save<float>()); // q
+
 	};
 
 	q(int id_, string id_str_, Communicator* communicator_, 
@@ -131,12 +132,15 @@ namespace A1_1 {
 	
 	void init_monitoring() {
 	    if (monitoring != nullptr) {
+    		entries_to_save.push_back(Entry_to_save<float>()); // entry for "q"
+	    
 		if (mon_opts->flag_output_file) {
-        	    output = new fstream();
-        	    monitoring->fout_1 = output;
+        	    output.push_back(new fstream());		// file for "q"
+        	    
+        	    monitoring->fout = output;
         	
-            	    output->open("output/" + id_str + ".csv", ios::out);
-	    	    *output << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+            	    output[0]->open("output/" + id_str + ".csv", ios::out);
+	    	    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
 		}
     	    }
 	}
@@ -292,27 +296,14 @@ namespace A1_1 {
                 // storing q
                 if (monitoring != nullptr) {
             	    if (mon_opts->flag_is_realtime) {
-            		time_ms.increment_time_ms(solver->h); // incrementing time counter
-			monitoring->add_entry(network, section, element, name, 
-				       	  time_ms.time_stamp(), flow);
-				       	  
-			//
-			//
-			//
-			entries_to_save[0].id = "q";
+			entries_to_save[0].id = name;
 			entries_to_save[0].value = flow;
-			monitoring->add_entry<float>(network, section, element, name, 
+			monitoring->add_entry<float>(network, section, element,
 				       	  time_ms.time_stamp(), entries_to_save);
-			//
-			//
-			//  
-				       	
 		    } else {
 			time_ms_relative += solver->h;
-			monitoring->add_entry(network, section, element, name, 
-				       	  time_ms_relative, flow);
-				       	  
-			
+			monitoring->add_entry(network, section, element,
+				       	  time_ms_relative, entries_to_save);
 		    }
 		}
             }
@@ -325,23 +316,27 @@ namespace A1_1 {
     	    cout << out.str();
     	    
     	    // output to data layer
-            if (monitoring != nullptr) {
-		if (mon_opts->flag_is_realtime) {
-            	    time_ms.init_time();
-	    	    monitoring->add_entry(network, section, element, name,
-                                      time_ms.time_stamp(), flow);
+    	    if (monitoring != nullptr) {
+                if (mon_opts->flag_is_realtime) {
+                    entries_to_save[0].id = name;
+                    entries_to_save[0].value = flow;
+                    monitoring->add_entry<float>(network, section, element,
+        	                          time_ms.time_stamp(), entries_to_save);
                 } else {
-            	    monitoring->add_entry(network, section, element, name,
-                                          time_ms_relative, flow);
+                    time_ms_relative += solver->h;
+                    monitoring->add_entry(network, section, element,
+                                      time_ms_relative, entries_to_save);
                 }
             }
+
 
 	}
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
 		if (mon_opts->flag_output_file)
-		    output->close();	
+		    for (int i=0; i<output.size(); i++)
+			output[i]->close();	
 		    
 		monitoring->data_flush(id_str);
 	    }

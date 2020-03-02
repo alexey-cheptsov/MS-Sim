@@ -72,8 +72,7 @@ public:
     string experiment_id;
 
     char* uri = nullptr;
-    fstream* fout_1 = nullptr;
-    fstream* fout_2 = nullptr;
+    vector<fstream*> fout;
 
     char command[512];
     char* bulk = "_bulk?pretty";
@@ -95,61 +94,6 @@ public:
 	if (mon_opts_->flag_output_uri)
 		uri = mon_opts_->uri;
     }
-
-    /*Monitoring() {
-	    uri = "http://localhost:9200/ms/";
-	    username = "admin";
-	    password = "admin";
-
-	    experiment_id = "2019-01-01T00:00:00.000";
-    };
-
-    Monitoring(string experiment_id_, char* uri_) {
-	    uri = uri_;
-
-	    experiment_id = experiment_id_;
-    };
-
-
-    Monitoring(string experiment_id_, char* uri_, string username_, string password_) {
-	    uri = uri_;
-	    username = username_;
-	    password = password_;
-
-	    experiment_id = experiment_id_;
-    };
-
-    Monitoring(string experiment_id_, fstream *fout_1_)
-    {
-            uri = nullptr;
-	    fout_1 = fout_1_;
-	    fout_2 = nullptr;
-
-	    experiment_id = experiment_id_;
-    }
-
-    Monitoring(string experiment_id_, fstream *fout_1_, fstream *fout_2_)
-    {
-	    experiment_id = experiment_id_;
-    }
-
-    Monitoring(string experiment_id_, fstream *fout_1_, char* uri_)
-    {
-	    fout_1 = fout_1_;
-	    fout_2 = nullptr;
-	    uri = uri_;
-
-	    experiment_id = experiment_id_;
-    }
-
-    Monitoring(string experiment_id_, fstream *fout_1_, fstream *fout_2_, char* uri_)
-    {
-	    fout_1 = fout_1_;
-	    fout_2 = fout_2_;
-	    uri = uri_;
-
-	    experiment_id = experiment_id_;
-    }*/
 
     static size_t write_data(void *ptr, size_t size, size_t nitems, struct url_data *data) {
 	    size_t index = data->size;
@@ -364,129 +308,52 @@ public:
     }
 
     template<typename T>
-    void add_entry(string net, string sec, string elem, string name, string timestamp, vector<Entry_to_save<T>>& entries)
+    void add_entry(string net, string sec, string elem, string timestamp, vector<Entry_to_save<T>>& entries)
     {
 	for (int i=0; i<entries.size(); i++) {
 	    //entries[i].id
 	    //entries[i].value
+	    
+	    if (mon_opts->flag_output_file){
+                    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
+                       << elem << "\";\"" << timestamp << "\";" << entries[i].value << endl;
+
+            }
+            else{
+                    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
+                    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
+                       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\""
+                       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << entries[i].id
+                       << "\":" << entries[i].value << "}" << endl;
+
+                    string s = ss.str();
+                    json_msg = new char [s.length()+1];
+                    strcpy (json_msg, s.c_str());
+            }
+            counter++;
+
+            if (counter == mon_opts->buf_size) {
+                if (mon_opts->flag_output_file){
+                        *fout[i] << ss.str();
+                }
+                else{
+                        if (mon_opts->flag_output_uri){
+                                publish_json(convert_comand(bulk), json_msg);
+                        }
+                }
+        	ss.str("");
+        	counter = 0;
+            }
 	}
 	
     }
-
-
-    void add_entry(string net, string sec, string elem, string name, string timestamp, float value)
-    {
-	    if (mon_opts->flag_output_file){
-		    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\"" 
-		       << elem << "\";\"" << timestamp << "\";" << value << endl;
-
-	    }
-	    else{
-		    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
-		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
-		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
-		       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << name 
-		       << "\":" << value << "}" << endl;	
-		    
-		    string s = ss.str();
-		    json_msg = new char [s.length()+1];
-		    strcpy (json_msg, s.c_str());
-	    }
-	    counter++;
-	    
-	    if (counter == mon_opts->buf_size){				    
-	    	if (mon_opts->flag_output_file){
-			*fout_1 << ss.str();
-		}
-		else{
-			if (mon_opts->flag_output_uri){
-				publish_json(convert_comand(bulk), json_msg);
-			}
-		}
-	    ss.str("");
-	    counter = 0;
-	    }    
-    }
     
-    void add_entry(string net, string sec, string elem, string name, float timestamp, float value)
+    template<typename T>
+    void add_entry(string net, string sec, string elem, float timestamp, vector<Entry_to_save<T>>& entries)
     {
-	    if (mon_opts->flag_output_file){
-		    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\"" 
-		       << elem << "\";" << timestamp << ";" << value << endl;
-
-	    }
-	    else{
-		    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
-		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
-		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
-		       << elem << "\",\"@timestamp\":" << timestamp << ",\"" << name 
-		       << "\":" << value << "}" << endl;	
-		    
-		    string s = ss.str();
-		    json_msg = new char [s.length()+1];
-		    strcpy (json_msg, s.c_str());
-	    }
-	    counter++;
-	    
-	    if (counter == mon_opts->buf_size){				    
-	    	if (mon_opts->flag_output_file){
-			*fout_1 << ss.str();
-		}
-		else{
-			if (mon_opts->flag_output_uri){
-				publish_json(convert_comand(bulk), json_msg);
-			}
-		}
-	    ss.str("");
-	    counter = 0;
-	    }    
+	add_entry<T>(net, sec, elem, to_string(timestamp), entries);
     }
 
-    void add_entry(string net, string sec, string elem, string name, string timestamp, float value_1, float value_2)
-    {
-		if (mon_opts->flag_output_file){
-
-		    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\"" 
-		       << elem << "\";\"" << timestamp << "\";" << value_1 << endl;
-		   ssg << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\"" 
-		       << elem << "\";\"" << timestamp << "\";" << value_2 << endl;
-	    }
-	    else{
-
-		    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
-		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
-		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
-		       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << name 
-		       << "_air\":" << value_1 << "}" << endl;	
-
-		    
-		    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
-		    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\"" 
-		       << net << "\",\"Section\":\"" << sec << "\",\"Element\":\"" 
-		       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << name 
-		       << "_gas\":" << value_2 << "}" << endl;	
-
-		    string s = ss.str();
-		    json_msg = new char [s.length()+1];
-		    strcpy (json_msg, s.c_str());
-		    
-	    }
-	    counter++;
-	    if (counter == mon_opts->buf_size){
-		if (mon_opts->flag_output_file){			
-			*fout_1 << ss.str();
-			*fout_2 << ssg.str();
-		}
-		else{			
-		    if (mon_opts->flag_output_uri){
-		    publish_json(convert_comand(bulk), json_msg);
-		    }
-		}
-	    	ss.str("");
-	    	ssg.str("");		
-	    	counter = 0;
-	    }
-    }
 
  void data_flush(string id_str)
     {
@@ -506,7 +373,7 @@ public:
 	} 
 	
 	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)) {
-	    *fout_1 << ss.str() << endl;
+	    *fout[0] << ss.str() << endl;
 	    
 	    string full_path = "./output/";
 	    full_path.append(id_str);
@@ -577,112 +444,6 @@ public:
 	    infile.close();
 	}
     }
-
-    /*void data_flush(string id_str)
-    {
-	
-	int count_lines=0;
-	int i;
-	char c;
-	char labels[30][100];
-	char values[30][100];
-	char j_msg[512];
-	int fcounter=0;
-	int num_label=0;
-	int num_char=0;
-	string outp = "./output/";
-	fstream infile;
-	string filename;
-	DIR *dir;
-	struct dirent *ent;
-
-
-	if ((mon_opts->flag_output_uri) && (!mon_opts->flag_output_file)) {	
-	    publish_json(convert_comand(bulk), json_msg);
-	} 
-	
-	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)){
-	    if (fout_2 == nullptr) {
-		*fout_1 << ss.str();	
-	    } else {
-	        *fout_1 << ss.str();
-		*fout_2 << ssg.str();
-	    }
-	 
-	    /*if (id_str == "Q_OS_q7"){
-		  if ((dir = opendir ("./output/")) != NULL) {
-	    	    while ((ent = readdir (dir)) != NULL) {
-			filename = ent->d_name;
-			if (filename.size() > 4 && filename.substr(filename.size() - 4) == ".csv"){
-			    cout << "filename is"<< filename << endl;
-			    outp.append(filename);
-			    infile.open(outp);
-			    if (!infile) cerr << "Can't open input file!";
-
-			    while ((c = infile.get()) != EOF) {  
-				outp = "./output/";	
-				if(( fcounter ==0))  {
-				    if (  (c==';' || c=='\n')) {
-					num_label++;
-					num_char=0;
-					labels[num_label][num_char]='\0';
-				    }
-			    
-				    if ((c!=';')&& (c!=10)) {
-					labels[num_label][num_char]=c;
-					labels[num_label][num_char+1]='\0';
-					num_char=num_char+1;
-				    }
-				
-				    if(c=='\n') {
-					fcounter ++;
-					num_label=0;
-					num_char=0;
-					values[num_label][num_char]='\0';
-				    }
-				 } else {
-				    if ((c==';' || c=='\n')){
-					num_label++;
-					num_char=0;
-					values[num_label][num_char]='\0';
-				    }
-				
-				    if( (c!=';') && (c!=10)){
-					values[num_label][num_char]=c;
-					values[num_label][num_char+1]='\0';
-					num_char=num_char+1;
-				    }
-				    
-				    if(c=='\n') {
-					sprintf(j_msg,"{");
-				    
-					for(i=0;i<num_label;i++) {
-					    if(i>0) sprintf(j_msg,"%s,",j_msg);
-					    sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
-					}
-				
-					sprintf(j_msg,"%s}\n",j_msg);
-			     		printf(" msg is %s",j_msg);		
-							    
-					if (mon_opts->flag_output_uri)
-						publish_json(convert_comand(post), j_msg);
-						    
-					num_label=0;
-					count_lines++;
-				    }
-				 }
-					
-			    } 
-	    		infile.close();
-			fcounter = 0;
-			}
-	    	    }
-		    closedir (dir);
-	    	}
-	    }   			  
-	} 
-    }*/
-		
 
 }; // Clas Monitoring
 

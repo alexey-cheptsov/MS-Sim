@@ -301,7 +301,7 @@ namespace A1_1 {
 		    entries_to_save[0].value = flow;
 		    
             	    if (mon_opts->flag_is_realtime) {			
-            		time_ms.increment_time_ms(solver->h)
+            		time_ms.increment_time_ms(solver->h);
 			monitoring->add_entry<float>(network, section, element,
 				       	  time_ms.time_stamp(), entries_to_save);
 		    } else {

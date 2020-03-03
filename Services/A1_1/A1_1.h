@@ -295,9 +295,10 @@ namespace A1_1 {
                 
                 // storing q
                 if (monitoring != nullptr) {
-            	    if (mon_opts->flag_is_realtime) {
-			entries_to_save[0].id = name;
-			entries_to_save[0].value = flow;
+            	    entries_to_save[0].id = name;
+		    entries_to_save[0].value = flow;
+		    
+            	    if (mon_opts->flag_is_realtime) {			
 			monitoring->add_entry<float>(network, section, element,
 				       	  time_ms.time_stamp(), entries_to_save);
 		    } else {

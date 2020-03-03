@@ -167,6 +167,7 @@ namespace A1_2 {
         void init_monitoring() {
     	    if (monitoring != nullptr) {
     		entries_to_save.push_back(Entry_to_save<float>()); // entry for "p"
+    		monitoring->ss.push_back(new stringstream());
 
         	if (mon_opts->flag_output_file) {
         	    output.push_back(new fstream());            // file for "p"
@@ -346,6 +347,7 @@ namespace A1_2 {
                     entries_to_save[0].value = pressure;
                 
             	    if (mon_opts->flag_is_realtime) {
+            		time_ms.increment_time_ms(solver->h);
                         monitoring->add_entry<float>(network, section, element,
                                           time_ms.time_stamp(), entries_to_save);
                     } else {

@@ -741,7 +741,7 @@ int main (int argc, char* argv[]) {
     mon_opts->experiment_id     = experiment_id;
     mon_opts->flag_is_realtime  = 0;
     mon_opts->flag_output_file  = 1;
-    mon_opts->buf_size 		= 1;
+    mon_opts->buf_size 		= 10;
 
     Element_model* model_G3_1 = new Element_model(
 	    0, "G3_1", communicator,

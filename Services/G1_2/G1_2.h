@@ -99,6 +99,9 @@ namespace G1_2 {
 	    if (monitoring != nullptr) {
                 entries_to_save.push_back(Entry_to_save<float>()); // entry for "q"
                 entries_to_save.push_back(Entry_to_save<float>()); // entry for "qm"
+                
+                monitoring->ss.push_back(new stringstream());
+                monitoring->ss.push_back(new stringstream());
         
                 if (mon_opts->flag_output_file) {
                     output.push_back(new fstream());            // file for "q"

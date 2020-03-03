@@ -80,8 +80,7 @@ public:
     char * json_msg;
     string username;
     string password;
-    stringstream ss;
-    stringstream ssg;
+    vector<stringstream*> ss;
 
     int counter = 0;
   
@@ -315,37 +314,40 @@ public:
 	    //entries[i].value
 	    
 	    if (mon_opts->flag_output_file){
-                    ss << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
+                    *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
                        << elem << "\";\"" << timestamp << "\";" << entries[i].value << endl;
 
             }
             else{
-                    ss << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
-                    ss << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
+                    *ss[i] << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
+                    *ss[i] << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
                        << net << "\",\"Section\":\"" << sec << "\",\"Element\":\""
                        << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << entries[i].id
                        << "\":" << entries[i].value << "}" << endl;
 
-                    string s = ss.str();
+                    string s = ss[i]->str();
                     json_msg = new char [s.length()+1];
                     strcpy (json_msg, s.c_str());
             }
-            counter++;
+        }
+        
+        counter++;
 
-            if (counter == mon_opts->buf_size) {
-                if (mon_opts->flag_output_file){
-                        *fout[i] << ss.str();
-                }
-                else{
-                        if (mon_opts->flag_output_uri){
-                                publish_json(convert_comand(bulk), json_msg);
-                        }
-                }
-        	ss.str("");
-        	counter = 0;
+        if (counter == mon_opts->buf_size) {
+            if (mon_opts->flag_output_file){
+        	for (int i=0; i<entries.size(); i++)
+                    *fout[i] << ss[i]->str();
             }
+            else{
+                    if (mon_opts->flag_output_uri){
+                            publish_json(convert_comand(bulk), json_msg);
+                    }
+            }
+    	
+    	    for (int i=0; i<entries.size(); i++)
+    		ss[i]->str("");
+    	    counter = 0;
 	}
-	
     }
     
     template<typename T>
@@ -373,7 +375,7 @@ public:
 	} 
 	
 	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)) {
-	    *fout[0] << ss.str() << endl;
+//	    *fout[0] << ss.str() << endl;
 	    
 	    string full_path = "./output/";
 	    full_path.append(id_str);

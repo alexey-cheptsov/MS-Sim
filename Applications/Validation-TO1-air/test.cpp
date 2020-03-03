@@ -461,7 +461,7 @@ public:
 	init_time();
 
 	//
-	// Simulation part 1 - change of P
+	// Simulation part 1 - raise of P
 	//
 	bool is_converged = false;
 	while ( !is_converged ) {

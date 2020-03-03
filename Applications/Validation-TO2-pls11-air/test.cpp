@@ -374,9 +374,19 @@ public:
         proxy_flush_collective_replicate(proxy_disp_p + Ports_p::command_flow);
         proxy_clear(proxy_disp_p + Ports_p::command_flow);
     }
+    
+    // sets pressure of node P5
+    void set_P5(float P) {
+	proxy_clear(proxy_disp_p + Ports_p::set_p);
+	add_proxy_value<float>(proxy_disp_p + Ports_p::set_p, H[Nodes::p380]);
+	proxy_flush_p2p_replicate(proxy_disp_p + Ports_p::set_p, "P"+to_string(Nodes::p380));
+	proxy_clear(proxy_disp_p + Ports_p::set_p);
+	
+	add_proxy_value<int>(proxy_disp_p + Ports_p::command_flow, Commands_p::set_p);
+	proxy_flush_p2p_replicate(proxy_disp_p + Ports_p::command_flow, "P"+to_string(Nodes::p380));
+	proxy_clear(proxy_disp_p + Ports_p::command_flow);    
+    }
 
-
-        
     void run() {
 	float* q[Elements::qtotal];
 	float* q_old[Elements::qtotal];
@@ -397,20 +407,27 @@ public:
 		q_old[i][j] = q_init;
 	}
 	set_Q(q);
-
+	
 	    // P
 	set_p(H);
-        
+
         
 	int num_step = 0;
 	init_time();
 
 	//
-	// Simulation part 1 - change of P
+	// Simulation part 1 - raise of P
 	//
+	float H_new = -36.7;
+	
 	bool is_converged = false;
-//	for (int i=0; i<100; i++) {
 	while ( !is_converged ) {
+	    // P
+	    if ( H[Nodes::p380] > H_new ) {
+		H[Nodes::p380] = max (H_new, H[Nodes::p380] + (-1)*(solv_params.nr_num_steps*solv_params.time_step));
+		set_P5(H[Nodes::p380]);
+	    }
+	
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
@@ -427,6 +444,69 @@ public:
 		for (int j=0; j<N[Elements::qtotal]; j++)
 		    q_old[i][j] = q[i][j];
 	}
+	
+	//
+	// Simulation part 2 - drop of P
+	//
+	H_new = -18.35;
+	
+	is_converged = false;
+	while ( !is_converged ) {
+	    // P
+            if ( H[Nodes::p380] < H_new ) {
+                H[Nodes::p380] = min (H_new, H[Nodes::p380] + (1)*(solv_params.nr_num_steps*solv_params.time_step));
+                set_P5(H[Nodes::p380]);
+            }
+
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q(q);
+
+    	    is_converged = true;
+    	    
+    	    if (fabs(q[0][0]-q_old[0][0]) > solv_params.precision)
+                is_converged = false;
+            	
+    	    for (int i=0; i<Elements::qtotal; i++)
+		for (int j=0; j<N[Elements::qtotal]; j++)
+		    q_old[i][j] = q[i][j];
+	}
+
+
+	//
+	// Simulation part 3 - raise of P
+	//
+	H_new = -36.7;
+	
+	is_converged = false;
+	while ( !is_converged ) {
+	    // P
+            if ( H[Nodes::p380] > H_new ) {
+                H[Nodes::p380] = max (H_new, H[Nodes::p380] + (-1)*(solv_params.nr_num_steps*solv_params.time_step));
+                set_P5(H[Nodes::p380]);
+            }
+
+	
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q(q);
+
+    	    is_converged = true;
+    	    
+    	    if (fabs(q[0][0]-q_old[0][0]) > solv_params.precision)
+                is_converged = false;
+            	
+    	    for (int i=0; i<Elements::qtotal; i++)
+		for (int j=0; j<N[Elements::qtotal]; j++)
+		    q_old[i][j] = q[i][j];
+	}
+
 
 
 	// Stopping the worker-ms
@@ -493,7 +573,7 @@ int main (int argc, char* argv[]) {
     bool is_bound[Nodes::ptotal];
     
     	// s380
-    H[Nodes::p380] = -36.7;
+    H[Nodes::p380] = 0;//-36.7;
     is_bound[Nodes::p380] = 1;
 	// s541 & s486
     H[Nodes::p541] = 0;

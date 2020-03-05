@@ -72,14 +72,14 @@ public:
     string experiment_id;
 
     char* uri = nullptr;
+
+    vector<string> fnames;	
     vector<fstream*> fout;
 
-    char command[512];
-    char* bulk = "_bulk?pretty";
-    char* post = "_doc?pretty";
-    char * json_msg;
-    string username;
-    string password;
+    char bulk[512];
+    char post[512];
+ 
+
     vector<stringstream*> ss;
 
     int counter = 0;
@@ -90,8 +90,22 @@ public:
     
 	// FOR EXAMPLE: if ((mon_opts_->flag_output_file) && (mon_opts_->flag_output_file)) 
 	experiment_id = mon_opts_->experiment_id;
-	if (mon_opts_->flag_output_uri)
+	if (mon_opts_->flag_output_uri){
 		uri = mon_opts_->uri;
+		char* bulk_s = "_bulk?pretty";
+    		char* post_s = "_doc?pretty";
+    		strcpy (bulk, uri);
+    		strcat (bulk, bulk_s); 
+    		strcpy (post, uri);
+    		strcat (post, post_s);
+	}
+
+	/*if (mon_opts_->flag_output_uri) {
+		for (int i=0; i<fnames.size(); i++) 
+			fout.push_back(new fstream());
+			fout[i]->open("output/" + fnames[i] + ".csv", ios::out);
+	    	    	*fout[i] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+	}*/
     }
 
     static size_t write_data(void *ptr, size_t size, size_t nitems, struct url_data *data) {
@@ -288,30 +302,10 @@ public:
 	    return SUCCESS;
     }
 
-     
-    int prepare_save(string id_str)   
-    {	
-	 if (id_str == "Q_OS_q7"){
-	    char* map_msg = " {\"mappings\": { \"properties\": {  \"P0\": {\"type\": \"float\"},          					\"P1\": {\"type\": \"float\"}, \"Pqmt0\": {\"type\": \"float\"},   					\"Pqmt1\": {\"type\": \"float\"}, \"q0\": {\"type\": \"float\"},     					\"q1\": {\"type\": \"float\"},   \"q2\": {\"type\": \"float\"},     					\"q3\": {\"type\": \"float\"},   \"q4\": {\"type\": \"float\"},   					\"q5\": {\"type\": \"float\"},   \"q6\": {\"type\": \"float\"},   					\"q7\": {\"type\": \"float\"},   \"q8\": {\"type\": \"float\"},   					\"q9\": {\"type\": \"float\"},   \"qm0_gas\": {\"type\": \"float\"},   				\"qm1_gas\": {\"type\": \"float\"},   \"qm2_gas\": {\"type\": \"float\"},   				\"qm0_air\": {\"type\": \"float\"}, \"qm1_air\": {\"type\": \"float\"},   				\"qm2_air\": {\"type\": \"float\"}, \"p0\": {\"type\": \"float\"},  					 \"p1\": {\"type\": \"float\"},   \"p2\": {\"type\": \"float\"},  					 \"p3\": {\"type\": \"float\"},   \"p4\": {\"type\": \"float\"},   					 \"p5\": {\"type\": \"float\"},   \"p6\": {\"type\": \"float\"},   					 \"p7\": {\"type\": \"float\"},   \"p8\": {\"type\": \"float\"},   					 \"p9\": {\"type\": \"float\"},  					   				\"qmt0_gas\": {\"type\": \"float\"}, \"qmt1_gas\": {\"type\": \"float\"},   				\"qmt2_gas\": {\"type\": \"float\"}, \"qmt3_gas\": {\"type\": \"float\"}, 		  		\"qmt4_gas\": {\"type\": \"float\"}, \"qmt5_gas\": {\"type\": \"float\"},   				\"qmt6_gas\": {\"type\": \"float\"}, \"qmt7_gas\": {\"type\":\"float\"}, 				\"qmt8_gas\": {\"type\": \"float\"}, \"qmt9_gas\": {\"type\":\"float\"},	 				\"qmt0_air\": {\"type\": \"float\"}, \"qmt1_air\": {\"type\": \"float\"},   				\"qmt2_air\": {\"type\": \"float\"}, \"qmt3_air\": {\"type\": \"float\"}, 		  		\"qmt4_air\": {\"type\": \"float\"}, \"qmt5_air\": {\"type\": \"float\"},   				\"qmt6_air\": {\"type\": \"float\"}, \"qmt7_air\": {\"type\":\"float\"}, 				\"qmt8_air\": {\"type\": \"float\"}, \"qmt9_air\": {\"type\":\"float\"} }}}";
-	    //del(uri); // delete all previous records on the db
-	    mapping(uri, map_msg );
-	    system("read");
-	    }
-    }
-
-    char * convert_comand(char * com)
-    {
-	    strcpy (command, uri);
-	    strcat (command, com); 
-	    return command;
-    }
-
     template<typename T>
     void add_entry(string net, string sec, string elem, string timestamp, vector<Entry_to_save<T>>& entries)
     {
 	for (int i=0; i<entries.size(); i++) {
-	    //entries[i].id
-	    //entries[i].value
 	    
 	    if (mon_opts->flag_output_file){
                     *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
@@ -324,10 +318,6 @@ public:
                        << net << "\",\"Section\":\"" << sec << "\",\"Element\":\""
                        << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << entries[i].id
                        << "\":" << entries[i].value << "}" << endl;
-
-                    string s = ss[i]->str();
-                    json_msg = new char [s.length()+1];
-                    strcpy (json_msg, s.c_str());
             }
         }
         
@@ -335,12 +325,18 @@ public:
 
         if (counter == mon_opts->buf_size) {
             if (mon_opts->flag_output_file){
-        	for (int i=0; i<entries.size(); i++)
+        	for (int i=0; i<entries.size(); i++){
                     *fout[i] << ss[i]->str();
+		    fout[i]->flush();
+		}
             }
             else{
                     if (mon_opts->flag_output_uri){
-                            publish_json(convert_comand(bulk), json_msg);
+			for (int i=0; i<entries.size(); i++){
+                            char json_msg[ss[i]->str().length()+1];
+		   	    strcpy (json_msg, ss[i]->str().c_str());
+			    publish_json(bulk, json_msg);
+			}
                     }
             }
     	
@@ -356,8 +352,8 @@ public:
 	add_entry<T>(net, sec, elem, to_string(timestamp), entries);
     }
 
-
- void data_flush(string id_str)
+ template<typename T>
+ void data_flush(string id_str, vector<Entry_to_save<T>>& entries)
     {
 	
 	int count_lines=0;
@@ -368,83 +364,108 @@ public:
 	int fcounter=0;
 	int num_label=0;
 	int num_char=0;
+	int flush_counter = 0;
+	stringstream ssf;
+
 
         if ((mon_opts->flag_output_uri) && (!mon_opts->flag_output_file)) {
-	    cout << "msg is:" << json_msg << endl;	
-	    publish_json(convert_comand(bulk), json_msg);
+	    if (counter != 0){
+		for (int i=0; i<entries.size(); i++){
+		      	char json_msg[ss[i]->str().length()+1];						
+		      	strcpy (json_msg, ss[i]->str().c_str());
+		      	publish_json(bulk, json_msg);
+		}
+	    }	
 	} 
 	
-	if ((mon_opts->flag_output_uri) && (mon_opts->flag_output_file)) {
-//	    *fout[0] << ss.str() << endl;
-	    
-	    string full_path = "./output/";
-	    full_path.append(id_str);
-	    full_path.append(".csv");
-	    ifstream infile(full_path);
-	    
-	    int finish = 0;
-	    while (!finish) {	
-        	c = infile.get();
-        	
-        	if (c == EOF) {	
-        	    finish = 1;
-        	} else {   
-		    if(( fcounter ==0))  {
-			if (  (c==';' || c=='\n')) {
-			    num_label++;
-    			    num_char=0;
-			    labels[num_label][num_char]='\0';
-			}
-	    
-			if ((c!=';')&& (c!=10)) {
-			    labels[num_label][num_char]=c;
-			    labels[num_label][num_char+1]='\0';
-		    	    num_char=num_char+1;
-			}
-		
-			if(c=='\n') {
-		    	    fcounter ++;
-		    	    num_label=0;
-		    	    num_char=0;
-		    	    values[num_label][num_char]='\0';
-			}
-		    } else {
-			if ((c==';' || c=='\n')){
-		    	    num_label++;
-		    	    num_char=0;
-		    	    values[num_label][num_char]='\0';
-			}
-		
-			if( (c!=';') && (c!=10)){
-		    	    values[num_label][num_char]=c;
-		    	    values[num_label][num_char+1]='\0';
-		    	    num_char=num_char+1;
-			}
-		    
-			if(c=='\n') {
-			    cout << "were here" << endl;
-		    	    sprintf(j_msg,"{");
-		    
-		    	    for(int i=0;i<num_label;i++) {
-				if(i>0) sprintf(j_msg,"%s,",j_msg);
-				sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
-		    	    }
-		
-		    	    sprintf(j_msg,"%s}\n",j_msg);
-	     		    //printf(" msg is %s",j_msg);		
-					    
-			    if (mon_opts->flag_output_uri)
-				publish_json(convert_comand(post), j_msg);
-				    
-			    num_label=0;
-			    count_lines++;
-			}
-		    }
+	if (mon_opts->flag_output_file) {
+		for (int i=0; i<entries.size(); i++){
+		    //cout << "flush ss is:" << ss[i]->str() << endl;
+                    *fout[i] << ss[i]->str() << "!";
+		    //fout[i]->flush();
 		}
-	    } 
-	
-	    infile.close();
-	}
+		if (mon_opts->flag_output_uri){ 
+		    for (int i=0; i<entries.size(); i++){
+			fout[i]->clear();
+			fout[i]->seekg(0, ios::beg);	    
+			int finish = 0;
+			fcounter = 0;
+			flush_counter = 0;
+			num_char=0;
+
+			while (!finish) {	
+			    c = fout[i]->get();
+			    if (c == EOF) {	
+				finish = 1;
+			    } else {   
+				if(( fcounter ==0))  {
+				    if ((c==';' || c=='\n')) {
+					num_label++;
+		    			num_char=0;
+					labels[num_label][num_char]='\0';
+				    }
+			    
+				    if ((c!=';')&& (c!=10)) {
+					labels[num_label][num_char]=c;
+					labels[num_label][num_char+1]='\0';
+				    	num_char=num_char+1;
+				    }
+				
+				    if(c=='\n') {
+					fcounter ++;
+				    	num_label=0;
+				    	num_char=0;
+				    	values[num_label][num_char]='\0';
+				    }
+				} else {
+				    if ((c==';' || c=='\n')){
+				    	num_label++;
+				    	num_char=0;
+				    	values[num_label][num_char]='\0';
+				    }
+				
+				    if ((c!=';') && (c!=10)){
+					values[num_label][num_char]=c;
+				    	values[num_label][num_char+1]='\0';
+				    	num_char=num_char+1;
+				    }
+				    
+				    if(c=='\n') {
+					sprintf(j_msg,"{");    
+					for(int i=0;i<num_label;i++) {
+					    if(i>0) sprintf(j_msg,"%s,",j_msg);
+					    	sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
+					}
+					sprintf(j_msg,"%s}\n",j_msg);
+				     	//cout << "j_msg is:" <<  j_msg << endl;
+					ssf << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} } \n" 				    << j_msg;
+					flush_counter++;	
+						    
+					if (flush_counter == mon_opts->buf_size){ 
+					    flush_counter = 0;
+					    if (mon_opts->flag_output_uri){
+						char msg[ssf.str().length()+1];
+						strcpy (msg, ssf.str().c_str());
+						//cout << "flush msg is:" <<  msg << endl;
+						publish_json(bulk, msg);
+						}
+					    ssf.str("");
+					} 					   
+					num_label=0;
+				     }
+				     if (c == '!'){
+					if (flush_counter !=0){ 
+					char msg[ssf.str().length()+1];
+					strcpy (msg, ssf.str().c_str());
+					//cout << "after !flush msg is:" <<  msg << endl;
+					publish_json(bulk, msg);}
+				    }
+				}
+			    }
+			} 
+		    }
+	        }  
+	  }
     }
 
 }; // Clas Monitoring
@@ -488,7 +509,8 @@ public:
         hours        = td.hours();
         minutes      = td.minutes();
         seconds      = td.seconds();
-        milliseconds = td.total_milliseconds() - ((hours * 3600 + minutes * 60 + seconds) * 1000);
+        //milliseconds = td.total_milliseconds() - ((hours * 3600 + minutes * 60 + seconds) * 1000);
+	milliseconds = 000;
     }
 
     void increment_time_ms(float step)

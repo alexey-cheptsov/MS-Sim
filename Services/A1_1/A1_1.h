@@ -141,7 +141,7 @@ namespace A1_1 {
         	    
         	    monitoring->fout = output;
         	
-            	    output[0]->open("output/" + id_str + ".csv", ios::out);
+            	    output[0]->open("output/" + id_str + ".csv", ios::in|ios::out);
 	    	    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
 		}
     	    }
@@ -338,11 +338,11 @@ namespace A1_1 {
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
+		monitoring->data_flush(id_str);
+	    
 		if (mon_opts->flag_output_file)
 		    for (int i=0; i<output.size(); i++)
 			output[i]->close();	
-		    
-		monitoring->data_flush(id_str);
 	    }
 	
 	    stringstream out;

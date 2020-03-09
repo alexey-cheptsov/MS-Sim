@@ -72,8 +72,7 @@ public:
     string experiment_id;
 
     char* uri = nullptr;
-
-    vector<string> fnames;	
+	
     vector<fstream*> fout;
 
     char bulk[512];
@@ -326,13 +325,15 @@ public:
         if (counter == mon_opts->buf_size) {
             if (mon_opts->flag_output_file){
         	for (int i=0; i<entries.size(); i++){
+		    //cout << "add ss is:" << ss[i]->str() << endl;
                     *fout[i] << ss[i]->str();
 		    fout[i]->flush();
 		}
             }
             else{
-                    if (mon_opts->flag_output_uri){
+                    if ((mon_opts->flag_output_uri)&& (!mon_opts->flag_output_file)){
 			for (int i=0; i<entries.size(); i++){
+			    //cout << "add ss is:" << ss[i]->str() << endl;
                             char json_msg[ss[i]->str().length()+1];
 		   	    strcpy (json_msg, ss[i]->str().c_str());
 			    publish_json(bulk, json_msg);
@@ -352,8 +353,7 @@ public:
 	add_entry<T>(net, sec, elem, to_string(timestamp), entries);
     }
 
- template<typename T>
- void data_flush(string id_str, vector<Entry_to_save<T>>& entries)
+ void data_flush()
     {
 	
 	int count_lines=0;
@@ -365,12 +365,14 @@ public:
 	int num_label=0;
 	int num_char=0;
 	int flush_counter = 0;
-	stringstream ssf;
+	
+	//vector<stringstream*> ssf;
 
 
         if ((mon_opts->flag_output_uri) && (!mon_opts->flag_output_file)) {
 	    if (counter != 0){
-		for (int i=0; i<entries.size(); i++){
+		for (int i=0; i<ss.size(); i++){
+			//cout << "flush ss is:" << ss[i]->str() << endl;
 		      	char json_msg[ss[i]->str().length()+1];						
 		      	strcpy (json_msg, ss[i]->str().c_str());
 		      	publish_json(bulk, json_msg);
@@ -379,24 +381,28 @@ public:
 	} 
 	
 	if (mon_opts->flag_output_file) {
-		for (int i=0; i<entries.size(); i++){
+		for (int i=0; i<fout.size(); i++){
 		    //cout << "flush ss is:" << ss[i]->str() << endl;
                     *fout[i] << ss[i]->str() << "!";
-		    //fout[i]->flush();
+		    fout[i]->flush();
 		}
 		if (mon_opts->flag_output_uri){ 
-		    for (int i=0; i<entries.size(); i++){
-			fout[i]->clear();
-			fout[i]->seekg(0, ios::beg);	    
+		    for (int i=0; i<fout.size(); i++){
+			
+			stringstream ssf;	    
 			int finish = 0;
 			fcounter = 0;
 			flush_counter = 0;
 			num_char=0;
+			
+			fout[i]->clear();
+			fout[i]->seekg(0, ios::beg);
 
 			while (!finish) {	
 			    c = fout[i]->get();
 			    if (c == EOF) {	
 				finish = 1;
+				//cout << "c=EOF" << endl;
 			    } else {   
 				if(( fcounter ==0))  {
 				    if ((c==';' || c=='\n')) {
@@ -432,34 +438,33 @@ public:
 				    
 				    if(c=='\n') {
 					sprintf(j_msg,"{");    
-					for(int i=0;i<num_label;i++) {
-					    if(i>0) sprintf(j_msg,"%s,",j_msg);
-					    	sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[i],values[i] );
+					for(int j=0;j<num_label;j++) {
+					    if(j>0) sprintf(j_msg,"%s,",j_msg);
+					    	sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[j],values[j] );
 					}
 					sprintf(j_msg,"%s}\n",j_msg);
-				     	//cout << "j_msg is:" <<  j_msg << endl;
-					ssf << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} } \n" 				    << j_msg;
+					ssf << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} } \n" 				    	    << j_msg;//}
 					flush_counter++;	
 						    
 					if (flush_counter == mon_opts->buf_size){ 
-					    flush_counter = 0;
-					    if (mon_opts->flag_output_uri){
-						char msg[ssf.str().length()+1];
-						strcpy (msg, ssf.str().c_str());
-						//cout << "flush msg is:" <<  msg << endl;
-						publish_json(bulk, msg);
-						}
+					    flush_counter = 0;	
+					    char msg[ssf.str().length()+1];
+					    strcpy (msg, ssf.str().c_str());
+					    //cout << "flush msg is:" <<  msg << endl;
+					    publish_json(bulk, msg);
 					    ssf.str("");
 					} 					   
 					num_label=0;
 				     }
 				     if (c == '!'){
 					if (flush_counter !=0){ 
-					char msg[ssf.str().length()+1];
-					strcpy (msg, ssf.str().c_str());
-					//cout << "after !flush msg is:" <<  msg << endl;
-					publish_json(bulk, msg);}
-				    }
+					    char msg[ssf.str().length()+1];
+					    strcpy (msg, ssf.str().c_str());
+					    //cout << "after !flush msg is:" <<  msg << endl;
+					    publish_json(bulk, msg);
+					    ssf.str("");
+					}
+				     }
 				}
 			    }
 			} 

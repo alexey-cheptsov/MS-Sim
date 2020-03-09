@@ -96,9 +96,6 @@ namespace A1_1 {
     	    beta = (S*r) / (ro);
         
     	    init_solver(solv_params_);
-    	    
-    	    
-
 	};
 
 	q(int id_, string id_str_, Communicator* communicator_, 
@@ -141,7 +138,7 @@ namespace A1_1 {
         	    
         	    monitoring->fout = output;
         	
-            	    output[0]->open("output/" + id_str + ".csv", ios::in|ios::out);
+            	    output[0]->open("output/" + id_str + ".csv", ios::in | ios::out | ios::app);
 	    	    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
 		}
     	    }
@@ -338,7 +335,7 @@ namespace A1_1 {
 	
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
-		monitoring->data_flush(id_str);
+		monitoring->data_flush();
 	    
 		if (mon_opts->flag_output_file)
 		    for (int i=0; i<output.size(); i++)

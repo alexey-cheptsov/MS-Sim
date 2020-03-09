@@ -297,7 +297,7 @@ namespace A1_2 {
 
 	virtual void command__stop() {
 	    if (monitoring != nullptr) {
-		monitoring->data_flush(id_str);
+		monitoring->data_flush();
 		
 		if (mon_opts->flag_output_file)
 		    for (int i=0; i<output.size(); i++)

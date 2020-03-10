@@ -73,9 +73,6 @@ public:
         H_end = H_end_;
         solv_params = solv_params_;
         
-        // ???
-        //communicator = communicator_;
-        
         // Setup of communication map
         set_communications();
         //communicator->print_comm_links();
@@ -87,7 +84,7 @@ public:
 	// Initialization of microservices
         for (int i=0; i<n; i++) {
 	    Q[i] = new qm(i+1/*id*/, "qm" + to_string(i), "q" + to_string(i), communicator, 
-			  "qm" + to_string(i) /*name*/, "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
+			  "qm" + to_string(i) /*name*/, "q" + to_string(i) /*name of q-element*/, "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
 	  		  mon_opts,
 			  S /*S*/, R/L /*r*/, L/n /*l*/, 
 			  A, BRf,
@@ -350,7 +347,7 @@ public:
 
     // sets output files
     void setup_fout(fstream& foutH, fstream& foutQ, fstream& foutP, int N, float H_start) {
-        foutH.open("outpu/H.csv", ios::out);
+        foutH.open("output/H.csv", ios::out);
         foutH << "t;H" << endl << "0;" << H_start << endl;
      
 
@@ -466,7 +463,6 @@ public:
 	init_time();
 
 	// Simulation
-//	for (int i=0; i<1; i++) {
 	while ( !is_converged ) {
 
     	    cout << "============== Iteration " << num_step << "==============" << endl;
@@ -484,9 +480,9 @@ public:
 	    float cur_mod_time = solv_params.nr_num_steps * num_step * solv_params.time_step;
 
 	    //if (cur_mod_time/store_interval - round(cur_mod_time/store_interval)==0)
-    	    fout(foutH, foutQ, foutP, n,
-                H_end, q, p,
-                cur_mod_time);
+    	    //fout(foutH, foutQ, foutP, n,
+            //    H_end, q, p,
+            //    cur_mod_time);
 
     	    is_converged = true;
    	    for (int i=0; i<n; i++) {
@@ -603,8 +599,9 @@ int main (int argc, char* argv[]) {
     
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = experiment_id;
+    mon_opts->flag_is_realtime  = 0;
     mon_opts->flag_output_file  = 1;
-    mon_opts->buf_size 		= 10;
+    mon_opts->buf_size          = 10;
 
     Element_model* model_G1_1 = new Element_model(
 	    0, "G1_1",

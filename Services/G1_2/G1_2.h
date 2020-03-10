@@ -109,10 +109,10 @@ namespace G1_2 {
         
                     monitoring->fout = output;
                     
-                    output[0]->open("output/" + air->id_str + ".csv", ios::in|ios::out);
+                    output[0]->open("output/" + air->id_str + ".csv", ios::out|ios::in|ios::trunc);
                     *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + air->name << endl;
                     
-                    output[1]->open("output/" + id_str + ".csv", ios::in|ios::out);
+                    output[1]->open("output/" + id_str + ".csv", ios::out|ios::in|ios::trunc);
                     *output[1] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
                 }
             }       

@@ -26,20 +26,10 @@ using namespace A1_2;
 class Element_model: public Microservice {
 public:
 
-    float S;	// model params
-    float R;
-    float L;
-    float dX;
     int n;
     
-    //float A;   // parameters of the filtration area
-    //float BRf; //  
     float V;
     float Qm0;
-
-        
-    float H_start; // pressures
-    float H_end;
         
     Solver_Params solv_params; // numeric params
     
@@ -54,23 +44,14 @@ public:
     Element_model(int id_, string id_str_, 
 	float S_, float R_, float L_, float dX_,
 	float V_, float Qm0_,
-	float H_start_, float H_end_, 
 	Solver_Params& solv_params_,
 	MpiCommunicator* communicator_,
 	Monitoring_opts* mon_opts_) 
 	    : Microservice(id_, id_str_, communicator_)
     {
-	S=S_;
-	R=R_;
-	L=L_;
-	dX=dX_;
-	V=V_;
-	Qm0=Qm0_;
-        H_start = H_start_;
-        H_end = H_end_;
         solv_params = solv_params_;
-        
-        n = L_/dX_;
+        n = round(L_/dX_);
+        Qm0  = Qm0_;
         
         // Setup of communication map
         set_communications();
@@ -84,17 +65,17 @@ public:
 	QQ[0] = new Qm(1/*id*/, "Qm0", communicator_,
 		    "OS" /*element*/, "Section1" /*section*/, "Network1" /*network*/,
 		    mon_opts_,
-		    S /*S*/, R /*R*/, L /*L*/, dX, 
-		    V, solv_params);
+		    S_ /*S*/, R_ /*R*/, L_ /*L*/, dX_, 
+		    V_, solv_params);
 		
-        PP[0] = new p(2/*id*/, "P0", communicator, 
+        PP[0] = new p(2/*id*/, "P0", communicator_, 
 			 "P0" /*name*/, "Section1" /*section*/, "Network1" /*network*/,
 			 mon_opts_,
-			 S /*S*/, dX /*dX*/, true /*is_bound*/, solv_params);
-	PP[1] = new p(3/*id*/, "P1", communicator, 
+			 S_ /*S*/, dX_ /*dX*/, true /*is_bound*/, solv_params);
+	PP[1] = new p(3/*id*/, "P1", communicator_, 
 			 "P1" /*name*/, "Section1" /*section*/, "Network1" /*network*/,
 			 mon_opts_,
-			 S /*S*/, dX /*dX*/, true /*is_bound*/, solv_params);
+			 S_ /*S*/, dX_ /*dX*/, true /*is_bound*/, solv_params);
 	
 	// Init underlying ms
         init_proxies();
@@ -405,19 +386,14 @@ public:
 
         
     void run() {
-
 	float q[n];
 	float qm[n];
 	float qm0[n];
 	
-	float p[n+1];
+	float p[n-1];
 	float P[2];
 
-        // Setting initial values of P and Q
-        P[0] = H_end;
-        for (int i=1; i<2; i++)
-	    P[i] = 0;
-	
+        // Setting initial values of Q
 	for (int i=0; i<n; i++) {
 	    q[i] = 0;
 	    qm[i] = Qm0;
@@ -432,7 +408,7 @@ public:
         set_Q(q);
         set_Qm(qm);
         set_Qm0(qm0);
-        set_p(P);
+        
         
 	bool is_converged = false;
 	int num_step = 0;
@@ -446,8 +422,13 @@ public:
 
 	init_time();
 
-	// Simulation
-//	for (int i=0; i<1; i++) {
+	//
+        // Simulation part 1 - raise of P
+        //
+	P[0] = 159.4 /*VS_p8 [t=1]*/ - 2.28 /*OS_p0*/;
+	P[1] = 0;
+	set_p(P);
+	
 	while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
@@ -457,7 +438,63 @@ public:
     	    get_Q(q);
     	    get_Qm(q);
 
-	    float cur_mod_time = solv_params.nr_num_steps * num_step * solv_params.time_step;
+    	    is_converged = true;
+   	    for (int i=0; i<n; i++) {
+        	if (fabs(q[i]-q_old[i]) > solv_params.precision)
+            	    is_converged = false;
+            	
+            	if (fabs(qm[i]-qm_old[i]) > solv_params.precision)
+                    is_converged = false;
+            	
+        	q_old[i] = q[i];
+        	qm_old[i] = qm[i];
+    	    }
+	}
+
+	//
+        // Simulation part 2 - drop of P
+        //
+	P[0] = P[0] * 0.75;
+	set_p(P);
+	is_converged = false;
+	
+	while ( !is_converged ) {
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q(q);
+    	    get_Qm(q);
+
+    	    is_converged = true;
+   	    for (int i=0; i<n; i++) {
+        	if (fabs(q[i]-q_old[i]) > solv_params.precision)
+            	    is_converged = false;
+            	
+            	if (fabs(qm[i]-qm_old[i]) > solv_params.precision)
+                    is_converged = false;
+            	
+        	q_old[i] = q[i];
+        	qm_old[i] = qm[i];
+    	    }
+	}
+	
+	//
+        // Simulation part 3 - raise again of P
+        //
+	P[0] = 159.4 /*VS_p8 [t=1]*/ - 2.28 /*OS_p0*/;
+	set_p(P);
+	is_converged = false;
+	
+	while ( !is_converged ) {
+    	    cout << "============== Iteration " << num_step << "==============" << endl;
+    	    
+    	    simulation_step();
+    	    num_step++;
+	    
+    	    get_Q(q);
+    	    get_Qm(q);
 
     	    is_converged = true;
    	    for (int i=0; i<n; i++) {
@@ -492,27 +529,19 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    int   n = 10;         // nr. of q- approx.elements
-        
     // parameters of Q-elements
-    float S = 7.0;   // square cut
-    float R = 4.68;  // resistance
-    float L = 1130;  // length
-    float dX = 113;
+    float S = 2.3;   // square cut
+    float R = 49;    // resistance
+    float L = 130;   // length
+    float dX = 50;
     
     // gas parameters of qm-elements
-    //float A = 1460.0;
-    //float BRf = 1.71;
     float V = 8000;
     float Qm0 = 0.0175;
 
-    // parameters of P-elements
-    float H_start = 0;
-    float H_end = 242.6;
-            
     // numeric parameters
-    Solver_Params solv_params = { 0.45        /*time step in s.*/,
-                                  0.000001    /*precision*/,
+    Solver_Params solv_params = { 0.15        /*time step in s.*/,
+                                  0.0000001   /*precision*/,
                                   30          /*nr. of numeric steps in sim block*/  };
     
     // Deployment options
@@ -528,29 +557,8 @@ int main (int argc, char* argv[]) {
     mpi_map.add({"Qm0_qm1", 5});
     mpi_map.add({"Qm0_q2",  6});
     mpi_map.add({"Qm0_qm2", 6});
-    mpi_map.add({"Qm0_q3",  7});
-    mpi_map.add({"Qm0_qm3", 7});
-    mpi_map.add({"Qm0_q4",  8});
-    mpi_map.add({"Qm0_qm4", 8});
-    mpi_map.add({"Qm0_q5",  9});
-    mpi_map.add({"Qm0_qm5", 9});
-    mpi_map.add({"Qm0_q6", 10});
-    mpi_map.add({"Qm0_qm6",10});
-    mpi_map.add({"Qm0_q7", 11});
-    mpi_map.add({"Qm0_qm7",11});
-    mpi_map.add({"Qm0_q8", 12});
-    mpi_map.add({"Qm0_qm8",12});
-    mpi_map.add({"Qm0_q9", 13});
-    mpi_map.add({"Qm0_qm9",13});
-    mpi_map.add({"Qm0_p0", 14});
-    mpi_map.add({"Qm0_p1", 15});
-    mpi_map.add({"Qm0_p2", 16});
-    mpi_map.add({"Qm0_p3", 17});
-    mpi_map.add({"Qm0_p4", 18});
-    mpi_map.add({"Qm0_p5", 19});
-    mpi_map.add({"Qm0_p6", 20});
-    mpi_map.add({"Qm0_p7", 21});
-    mpi_map.add({"Qm0_p8", 22});
+    mpi_map.add({"Qm0_p0",  7});
+    mpi_map.add({"Qm0_p1",  8});
     
     MpiCommunicator* communicator = new MpiCommunicator(mpi_map);
 
@@ -575,7 +583,6 @@ int main (int argc, char* argv[]) {
 	    0, "G2_1",
             S, R, L, dX,
             V, Qm0,
-            H_start, H_end,
             solv_params,
             communicator,
             mon_opts);

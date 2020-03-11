@@ -350,7 +350,11 @@ namespace G1_1 {
 	}
     
 	virtual void command__init_time() {
-	    air->time_ms.init_time();
+	    if (monitoring != nullptr)
+                if (mon_opts->flag_is_realtime)
+                    air->time_ms.init_time();
+                else
+                    air->time_ms_relative = 0;
 	}
 	
 	void run() {

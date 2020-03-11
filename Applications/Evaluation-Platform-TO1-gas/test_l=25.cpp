@@ -497,16 +497,14 @@ public:
     	    get_Qm(q);
 
     	    is_converged = true;
-   	    for (int i=0; i<n; i++) {
-        	if (fabs(q[i]-q_old[i]) > solv_params.precision)
-            	    is_converged = false;
+    	    if (fabs(q[0]-q_old[0]) > solv_params.precision)
+                is_converged = false;
             	
-            	if (fabs(qm[i]-qm_old[i]) > solv_params.precision)
-                    is_converged = false;
+            if (fabs(qm[0]-qm_old[0]) > solv_params.precision)
+                is_converged = false;
             	
-        	q_old[i] = q[i];
-        	qm_old[i] = qm[i];
-    	    }
+    	    q_old[0] = q[0];
+    	    qm_old[0] = qm[0];
 	}
 
 	// Stopping the worker-ms

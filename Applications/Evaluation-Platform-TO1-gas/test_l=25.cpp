@@ -533,7 +533,7 @@ int main (int argc, char* argv[]) {
     float S = 2.3;   // square cut
     float R = 49;    // resistance
     float L = 130;   // length
-    float dX = 50;
+    float dX = 25;
     
     // gas parameters of qm-elements
     float V = 8000;
@@ -557,8 +557,14 @@ int main (int argc, char* argv[]) {
     mpi_map.add({"Qm0_qm1", 5});
     mpi_map.add({"Qm0_q2",  6});
     mpi_map.add({"Qm0_qm2", 6});
-    mpi_map.add({"Qm0_p0",  7});
-    mpi_map.add({"Qm0_p1",  8});
+    mpi_map.add({"Qm0_q3",  7});
+    mpi_map.add({"Qm0_qm3", 7});
+    mpi_map.add({"Qm0_q4",  8});
+    mpi_map.add({"Qm0_qm4", 8});
+    mpi_map.add({"Qm0_p0",  9});
+    mpi_map.add({"Qm0_p1",  10});
+    mpi_map.add({"Qm0_p2",  11});
+    mpi_map.add({"Qm0_p3",  12});
     
     MpiCommunicator* communicator = new MpiCommunicator(mpi_map);
 

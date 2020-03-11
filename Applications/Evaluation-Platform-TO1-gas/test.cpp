@@ -577,7 +577,7 @@ int main (int argc, char* argv[]) {
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = experiment_id;
     mon_opts->flag_output_file  = 1;
-    mon_opts->buf_size 		= 10;
+    mon_opts->buf_size 		= 1;
 
     Element_model* model_G2_1 = new Element_model(
 	    0, "G2_1",

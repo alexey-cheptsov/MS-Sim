@@ -55,6 +55,8 @@ public:
     #define FAILED 1
 
     #define headercode_char_size 11
+    
+    char* dynamic_mapping = "{ \"mappings\" : {\"dynamic_templates\": [ { \"floats\" : { \"match_mapping_type\" : \"long\", \"mapping\" : { \"type\" : \"float\"}}}]}}";
     /*******************************************************************************
     * Variables Declarations
     ******************************************************************************/
@@ -77,7 +79,8 @@ public:
 
     char bulk[512];
     char post[512];
- 
+    char search[512];
+    bool flag_index_not_found = 0;
 
     vector<stringstream*> ss;
 
@@ -93,18 +96,15 @@ public:
 		uri = mon_opts_->uri;
 		char* bulk_s = "_bulk?pretty";
     		char* post_s = "_doc?pretty";
+		char* search_s = "_search?pretty";
     		strcpy (bulk, uri);
     		strcat (bulk, bulk_s); 
     		strcpy (post, uri);
     		strcat (post, post_s);
+		strcpy (search, uri);
+    		strcat (search, search_s);
+		
 	}
-
-	/*if (mon_opts_->flag_output_uri) {
-		for (int i=0; i<fnames.size(); i++) 
-			fout.push_back(new fstream());
-			fout[i]->open("output/" + fnames[i] + ".csv", ios::out);
-	    	    	*fout[i] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
-	}*/
     }
 
     static size_t write_data(void *ptr, size_t size, size_t nitems, struct url_data *data) {
@@ -205,14 +205,14 @@ public:
 
     // DESCRIPTION: This function releases resources acquired by curl_global_init.
     void close_curl(void) {
-    // 	printf(" ***************** CLOSE CURL ***************\n");
+	    // 	printf(" ***************** CLOSE CURL ***************\n");
 	    curl_global_cleanup( );
     }
 
 
     /** Prepare for using libcurl with message */
     CURL *prepare_publish(const char *URL,const char *message, FILE *send_fp, const char *operation ) {
-	    init_curl( );//this defined the headers
+	    init_curl( ); //this defines the headers
 	    CURL *curl = curl_easy_init();
 	    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	    curl_easy_setopt(curl, CURLOPT_URL, URL);
@@ -253,9 +253,7 @@ public:
 	    return SUCCESS;
     }
 
-
-
-    int mapping(char *URL, char *message) {
+    int map(char *URL, char *message) {
 	    struct url_data rescode;
 	    if(reserve_data_struc(&rescode)==FAILED)
 		    return FAILED;
@@ -263,6 +261,78 @@ public:
 		    return FAILED;
 	    const char operation[]="PUT";
 	    CURL *curl = prepare_publish(URL, message, NULL, operation);
+	    if(curl == NULL)
+		    return FAILED; 
+	    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, write_data); 
+	    curl_easy_setopt(curl, CURLOPT_HEADERDATA, &rescode); 
+	    CURLcode response_code = curl_easy_perform(curl);
+	    free(rescode.data); rescode.data=NULL;
+	    if(response_code != CURLE_OK) {
+		    const char *error_msg = curl_easy_strerror(response_code);
+		    printf("publish(char *, Message) %s", error_msg);
+		    return FAILED;
+	    }
+	    curl_easy_cleanup(curl);
+	    return SUCCESS;
+    }
+    
+    void mapping() // preparation of dynamic datatype schema (mapping)
+    {
+        if (mon_opts->flag_output_uri) {
+                map(mon_opts->uri, dynamic_mapping);
+                /*string map_msg = "{ \"mappings\" : {\"properties\": {";
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"P");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"Pqmt");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"p");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"q");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"qm");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+
+                for (int i=0; i<n;i++){
+                        map_msg.append("\"qmt");
+                        map_msg.append(to_string(i));
+                        map_msg.append("\": {\"type\": \"float\"},");
+                }
+                map_msg.append("\"qmt");
+                map_msg.append(to_string(n));
+                map_msg.append("\": {\"type\": \"float\"}}}}");
+                char m_msg[map_msg.length()+1];
+                strcpy (m_msg, map_msg.c_str());
+                map(mon_opts->uri, m_msg );*/
+        }
+    }
+
+    int get(char *URL) {
+	    struct url_data rescode;
+	    if(reserve_data_struc(&rescode)==FAILED)
+		    return FAILED;
+	    if(check_URL(URL)!=SUCCESS)
+		    return FAILED;
+	    const char operation[]="GET";
+	    CURL *curl = prepare_publish(URL, "", NULL, operation);
 	    if(curl == NULL)
 		    return FAILED; 
 	    curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, write_data); 
@@ -540,5 +610,5 @@ public:
                  }
         }
 };
-        
+   
 #endif // MONITORING_H

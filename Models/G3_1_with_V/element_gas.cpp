@@ -746,7 +746,7 @@ int main (int argc, char* argv[]) {
     
     if ((mpi_rank == 0)&&(mon_opts->flag_output_uri)) {
         Monitoring mon(mon_opts);
-        mon.mapping();
+        mon.set_mapping();
     }
 
     Element_model* model_G3_1 = new Element_model(

@@ -276,7 +276,7 @@ public:
 	    return SUCCESS;
     }
     
-    void mapping() // preparation of dynamic datatype schema (mapping)
+    void set_mapping() // preparation of dynamic datatype schema (mapping)
     {
         if (mon_opts->flag_output_uri) {
                 map(mon_opts->uri, dynamic_mapping);

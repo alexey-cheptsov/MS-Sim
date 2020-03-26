@@ -645,7 +645,13 @@ int main (int argc, char* argv[]) {
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id     = experiment_id;
     mon_opts->flag_output_file  = 1;
-    mon_opts->buf_size 		= 10;
+    //mon_opts->flag_output_uri   = 1;
+    mon_opts->buf_size          = 10;
+
+    if ((mpi_rank == 0)&&(mon_opts->flag_output_uri)) {
+        Monitoring mon(mon_opts);
+        mon.set_mapping();
+    }
 
     Element_model* model_G2_2 = new Element_model(
 	    0, "G2_2",

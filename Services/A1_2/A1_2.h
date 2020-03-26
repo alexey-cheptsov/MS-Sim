@@ -171,10 +171,11 @@ namespace A1_2 {
 
         	if (mon_opts->flag_output_file) {
         	    output.push_back(new fstream());            // file for "p"
-            	    monitoring->fout = output;
-                
+
             	    output[0]->open("output/" + id_str + ".csv", ios::in | ios::out | ios::trunc);
                     *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+
+            	    monitoring->fout = output;
                 }
             }   
         }            

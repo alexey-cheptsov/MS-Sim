@@ -700,8 +700,6 @@ int main (int argc, char* argv[]) {
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    int   n = 10;         // nr. of q- approx.elements
-        
     //
     // parameters of Q-elements
     //

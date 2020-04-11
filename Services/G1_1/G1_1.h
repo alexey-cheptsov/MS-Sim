@@ -140,11 +140,11 @@ namespace G1_1 {
         	if (mon_opts->flag_output_file) {
         	    output.push_back(new fstream());            // file for "q"
             	    output[0]->open("output/" + air->id_str + ".csv", ios::out|ios::in|ios::trunc);
-            	    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + air->name << endl;
+            	    *output[0] << "ExperimentID;Network;Section;Element;Approximation;@timestamp;value" << endl;
 
         	    output.push_back(new fstream());            // file for "qm"
             	    output[1]->open("output/" + id_str + ".csv", ios::out|ios::in|ios::trunc);
-            	    *output[1] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+            	    *output[1] << "ExperimentID;Network;Section;Element;Approximation;@timestamp;value" << endl;
 
         	    monitoring->fout = output;
             	}

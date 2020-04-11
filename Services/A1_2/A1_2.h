@@ -173,7 +173,7 @@ namespace A1_2 {
         	    output.push_back(new fstream());            // file for "p"
 
             	    output[0]->open("output/" + id_str + ".csv", ios::in | ios::out | ios::trunc);
-                    *output[0] << "ExperimentID;Network;Section;Element;@timestamp;" + name << endl;
+                    *output[0] << "ExperimentID;Network;Section;Element;Approximation;@timestamp;value" << endl;
 
             	    monitoring->fout = output;
                 }

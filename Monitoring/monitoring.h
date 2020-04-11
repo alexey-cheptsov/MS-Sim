@@ -38,7 +38,7 @@ public:
     
     int buf_size		= 0;
     
-    char* uri			= "http://localhost:9200/ms/";    
+    char* localhost			= "http://localhost:9200/";    
 };
 
 template <typename T> 
@@ -55,8 +55,8 @@ public:
     #define FAILED 1
 
     #define headercode_char_size 11
-    
-    char* dynamic_mapping = "{ \"mappings\" : {\"dynamic_templates\": [ { \"floats\" : { \"match_mapping_type\" : \"long\", \"mapping\" : { \"type\" : \"float\"}}}]}}";
+
+    char* dynamic_mapping = "{ \"mappings\" : {\"dynamic_templates\": [ { \"floats\" : { \"match_mapping_type\" : \"long\", 				       \"mapping\" : { \"type\" : \"float\"}}}]}}";
     /*******************************************************************************
     * Variables Declarations
     ******************************************************************************/
@@ -73,13 +73,15 @@ public:
 
     string experiment_id;
 
-    char* uri = nullptr;
+    char* localhost = nullptr;
 	
     vector<fstream*> fout;
 
     char bulk[512];
     char post[512];
     char search[512];
+    char index[512];
+    char uri[512];
     bool flag_index_not_found = 0;
 
     vector<stringstream*> ss;
@@ -93,17 +95,30 @@ public:
 	// FOR EXAMPLE: if ((mon_opts_->flag_output_file) && (mon_opts_->flag_output_file)) 
 	experiment_id = mon_opts_->experiment_id;
 	if (mon_opts_->flag_output_uri){
-		uri = mon_opts_->uri;
-		char* bulk_s = "_bulk?pretty";
-    		char* post_s = "_doc?pretty";
-		char* search_s = "_search?pretty";
+
+		char* index_s = "ms";
+		char* bulk_s = "/_bulk?pretty";
+    		char* post_s = "/_doc?pretty";
+		char* search_s = "/_search?pretty";
+
+		strcpy (uri, mon_opts_->localhost);
+    		strcat (uri, index_s); 
     		strcpy (bulk, uri);
     		strcat (bulk, bulk_s); 
     		strcpy (post, uri);
     		strcat (post, post_s);
-		strcpy (search, uri);
-    		strcat (search, search_s);
-		
+		strcpy (index, index_s);
+
+		if (mon_opts_->flag_is_realtime){
+			char* index_s = "ms_realtime";
+			strcpy (uri, mon_opts_->localhost);
+    			strcat (uri, index_s); 
+			strcpy (post, uri);
+			strcat (post, post_s);
+			strcpy (bulk, uri);
+    			strcat (bulk, bulk_s); 
+			strcpy (index, index_s);	
+		}	
 	}
     }
 
@@ -205,14 +220,14 @@ public:
 
     // DESCRIPTION: This function releases resources acquired by curl_global_init.
     void close_curl(void) {
-	    // 	printf(" ***************** CLOSE CURL ***************\n");
+    // 	printf(" ***************** CLOSE CURL ***************\n");
 	    curl_global_cleanup( );
     }
 
 
     /** Prepare for using libcurl with message */
     CURL *prepare_publish(const char *URL,const char *message, FILE *send_fp, const char *operation ) {
-	    init_curl( ); //this defines the headers
+	    init_curl( );//this defined the headers
 	    CURL *curl = curl_easy_init();
 	    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1);
 	    curl_easy_setopt(curl, CURLOPT_URL, URL);
@@ -275,55 +290,6 @@ public:
 	    curl_easy_cleanup(curl);
 	    return SUCCESS;
     }
-    
-    void set_mapping() // preparation of dynamic datatype schema (mapping)
-    {
-        if (mon_opts->flag_output_uri) {
-                map(mon_opts->uri, dynamic_mapping);
-                /*string map_msg = "{ \"mappings\" : {\"properties\": {";
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"P");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"Pqmt");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"p");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"q");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"qm");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-
-                for (int i=0; i<n;i++){
-                        map_msg.append("\"qmt");
-                        map_msg.append(to_string(i));
-                        map_msg.append("\": {\"type\": \"float\"},");
-                }
-                map_msg.append("\"qmt");
-                map_msg.append(to_string(n));
-                map_msg.append("\": {\"type\": \"float\"}}}}");
-                char m_msg[map_msg.length()+1];
-                strcpy (m_msg, map_msg.c_str());
-                map(mon_opts->uri, m_msg );*/
-        }
-    }
 
     int get(char *URL) {
 	    struct url_data rescode;
@@ -371,6 +337,15 @@ public:
 	    return SUCCESS;
     }
 
+    void mapping() //	  
+    {	
+	if (mon_opts->flag_output_uri) {
+		map(uri, dynamic_mapping);    
+
+	}
+    }
+
+
     template<typename T>
     void add_entry(string net, string sec, string elem, string timestamp, vector<Entry_to_save<T>>& entries)
     {
@@ -378,15 +353,15 @@ public:
 	    
 	    if (mon_opts->flag_output_file){
                     *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
-                       << elem << "\";\"" << timestamp << "\";" << entries[i].value << endl;
+                       << elem << "\";\"" << entries[i].id << "\";\"" << timestamp << "\";"  << entries[i].value << endl;
 
             }
             else{
-                    *ss[i] << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} }" << endl;
+                    *ss[i] << "{\"index\":{\"_index\":\"" << index << "\",\"_type\":\"_doc\"} }" << endl;
                     *ss[i] << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
                        << net << "\",\"Section\":\"" << sec << "\",\"Element\":\""
-                       << elem << "\",\"@timestamp\":\"" << timestamp << "\",\"" << entries[i].id
-                       << "\":" << entries[i].value << "}" << endl;
+                       << elem << "\",\"Approximation\":\"" << entries[i].id
+                       << "\",\"@timestamp\":\"" << timestamp << "\",\"value\":" << entries[i].value << "}" << endl;
             }
         }
         
@@ -472,7 +447,6 @@ public:
 			    c = fout[i]->get();
 			    if (c == EOF) {	
 				finish = 1;
-				//cout << "c=EOF" << endl;
 			    } else {   
 				if(( fcounter ==0))  {
 				    if ((c==';' || c=='\n')) {
@@ -513,7 +487,7 @@ public:
 					    	sprintf(j_msg,"%s\"%s\":%s",j_msg,labels[j],values[j] );
 					}
 					sprintf(j_msg,"%s}\n",j_msg);
-					ssf << "{\"index\":{\"_index\":\"ms\",\"_type\":\"_doc\"} } \n" 				    	    << j_msg;//}
+					ssf << "{\"index\":{\"_index\":\"" << index << "\",\"_type\":\"_doc\"} } \n" 				    	    	<< j_msg;//}
 					flush_counter++;	
 						    
 					if (flush_counter == mon_opts->buf_size){ 
@@ -610,5 +584,5 @@ public:
                  }
         }
 };
-   
+     
 #endif // MONITORING_H

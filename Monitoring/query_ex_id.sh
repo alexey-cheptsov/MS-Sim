@@ -1,12 +1,12 @@
 set -x
 
 #
-# 0 Obtain mapping
+# 1 Obtain mapping
 #
 #curl -XGET "localhost:9200/ms/_mapping?pretty"
 
 #
-# 1 Simple query
+# 2 Simple query
 #
 
 #curl -XGET "localhost:9200/ms/_search?pretty" -H "Content-Type: application/json" \
@@ -23,7 +23,7 @@ set -x
 #} 
 
 #
-# 2 Query with multiple fields match
+# 3 Query with multiple fields match
 #
 
 #curl -XGET "localhost:9200/ms/_search?pretty" -H "Content-Type: application/json" \
@@ -31,14 +31,14 @@ set -x
 
 
 #
-# 3 Query with multiple fields match and values range
+# 4 Query with multiple fields match and values range
 #
 
 #curl -XGET "localhost:9200/ms/_search?pretty" -H "Content-Type: application/json" \
 #   -d '{ "from": 0, "size": 100, "query": { "bool": { "filter": [ {"match": {"ExperimentID" : "2020-04-10T15:07:37.000"}}, {"match": {"Element" : "Streb"}}, {"range": {"@timestamp" : {"from" : "0.150000", "to" : "0.300000"} }} ] } } }'
 
 #
-# 4 Query with multiple fields match and values range and specific field
+# 5 Query with multiple fields match and values range and specific field
 #
 
 #curl -XGET "localhost:9200/ms/_search?pretty" -H "Content-Type: application/json" \
@@ -46,11 +46,11 @@ set -x
 
 # and for real-time
 
-curl -XGET "localhost:9200/ms_realtime/_search?pretty" -H "Content-Type: application/json" \
-   -d '{ "from": 0, "size": 10, "query": { "bool": { "filter": [ {"match": {"ExperimentID" : "2020-04-11T19:44:01.000"}}, {"match": {"Element" : "Streb"}}, {"match": {"Approximation" : "q0"}}, {"range": {"@timestamp" : {"gte" : "2020-04-11T20:06:08.350", "lte" : "2020-04-11T20:06:08.500"} }} ] } } }'
+#curl -XGET "localhost:9200/ms_realtime/_search?pretty" -H "Content-Type: application/json" \
+#   -d '{ "from": 0, "size": 10, "query": { "bool": { "filter": [ {"match": {"ExperimentID" : "2020-04-11T19:44:01.000"}}, {"match": {"Element" : "Streb"}}, {"match": {"Approximation" : "q0"}}, {"range": {"@timestamp" : {"gte" : "2020-04-11T20:06:08.350", "lte" : "2020-04-11T20:06:08.500"} }} ] } } }'
 
 #
-# 4 Query with multiple fields match and values range and specific field
+# 6 Query with multiple fields match and values range and specific field
 #
 
 #GET my_inedx/my_type/_search

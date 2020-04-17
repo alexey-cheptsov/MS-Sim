@@ -161,6 +161,12 @@ public:
 	    }
 	    return size * nitems;
     }
+    
+        static size_t write_data_suppress_output(void *buffer, size_t size, size_t nmemb, void *userp)
+    {
+	return size * nmemb;
+    }
+    
 
     void free_data_struc(struct url_data *data){
 	    if(data->data!=NULL) free(data->data);
@@ -224,7 +230,6 @@ public:
 	    curl_global_cleanup( );
     }
 
-
     /** Prepare for using libcurl with message */
     CURL *prepare_publish(const char *URL,const char *message, FILE *send_fp, const char *operation ) {
 	    init_curl( );//this defined the headers
@@ -237,8 +242,13 @@ public:
 		    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long ) strlen(message));
 	    } 
 	    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, operation); /* PUT, POST, ... */
+	    
+	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data_suppress_output);
+	    
 	    return curl;
     }
+    
+
 
 
      /** json-formatted data publish using libcurl */

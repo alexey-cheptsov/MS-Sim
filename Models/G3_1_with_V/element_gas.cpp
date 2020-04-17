@@ -44,6 +44,12 @@ public:
     p**   PP;
     
     DeploymentPool* deployment_pool;
+    
+    // Monitoring options
+    Monitoring_opts* mon_opts;
+    Time_MS time_ms;                // time stamp for real-time option
+    float time_ms_relative;         // time stamp for relative time option
+
                         
     Element_model(int id_, string id_str_, MpiCommunicator* communicator_,
                 string section_, string network_,
@@ -67,6 +73,7 @@ public:
 	
 	Qm0 = Qm0_;
 	solv_params = solv_params_;
+	mon_opts = mon_opts_;
 	
         // Setup of communication map
         set_communications();
@@ -461,6 +468,12 @@ public:
 
     // inits time stamp for all ms
     void init_time() {
+    
+	if (mon_opts->flag_is_realtime)
+            time_ms.init_time();
+        else
+            time_ms_relative = 0;
+    
 	add_proxy_value(Ports_QQmt::command_flow, Commands_QQmt::init_time/*value*/);
         proxy_flush_collective_replicate(Ports_QQmt::command_flow);
         proxy_clear(Ports_QQmt::command_flow);
@@ -479,6 +492,13 @@ public:
         add_proxy_value<int>(proxy_disp_p + Ports_p::command_flow, Commands_p::simulation /*value*/);
         proxy_flush_collective_replicate(proxy_disp_p + Ports_p::command_flow);
         proxy_clear(proxy_disp_p + Ports_p::command_flow);
+        
+	// Calculation of the current simulation time        
+	for (int i=0; i<solv_params.nr_num_steps; i++)
+    	    if (mon_opts->flag_is_realtime)
+        	time_ms.increment_time_ms(solv_params.time_step);
+    	    else
+    		time_ms_relative += solv_params.time_step;
     }
 
         
@@ -579,6 +599,13 @@ public:
     	    
 
 	}
+	
+	cout << "Time stamp of the final result: ";
+	if (mon_opts->flag_is_realtime)
+    	    cout << time_ms.time_stamp() << endl;
+    	else
+    	    cout << time_ms_relative << endl;
+
 
 	// Stopping the worker-ms
         add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::stop);

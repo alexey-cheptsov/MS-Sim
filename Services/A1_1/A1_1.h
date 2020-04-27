@@ -313,6 +313,14 @@ namespace A1_1 {
 	virtual void command__save() {
 	    // output to screen
 	    stringstream out;
+	    
+	    if (monitoring != nullptr) {
+		if (mon_opts->flag_is_realtime)
+		    out << "Timestamp: " << time_ms.time_stamp() << ":  ";
+		else
+		    out << "Timestamp: " << time_ms_relative <<  ":  ";
+	    }
+	    
     	    out << "ms_" << id << "(" << id_str << "): q=" << flow << endl;
     	    cout << out.str();
     	    

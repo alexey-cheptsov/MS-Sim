@@ -272,6 +272,14 @@ namespace G1_2 {
 	virtual void command__save() {
 	    // output to screen
 	    stringstream out;
+	    
+	    if (monitoring != nullptr) {
+                if (mon_opts->flag_is_realtime)
+                    out << "Timestamp: " << air->time_ms.time_stamp() << ":  ";
+                else
+                    out << "Timestamp: " << air->time_ms_relative << ":  ";
+            }
+	    
     	    out << "ms_" << id << "(" << id_str << "): q=" << air->flow << ", qm=" << flow_gas << endl;
     	    cout << out.str();
 

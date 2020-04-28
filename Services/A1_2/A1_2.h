@@ -406,6 +406,10 @@ namespace A1_2 {
         	    time_ms_relative = 0;
         }
         
+        virtual void command__flush_data() {
+            if (monitoring != nullptr)
+                monitoring->data_flush();
+        }
 	
 	void run() {
 	    init_monitoring();
@@ -461,6 +465,13 @@ namespace A1_2 {
                         command__init_time();
                         break;
                     }
+                    
+                    // 7
+                    case Commands_p::flush_data: {
+                        command__flush_data();
+                        break;
+                    }
+
 		}
 	    }
 	}

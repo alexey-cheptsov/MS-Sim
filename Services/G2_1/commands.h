@@ -28,7 +28,9 @@ namespace G2_1 {
             save                = 9,
             stop                = 10,
             id                  = 11,
-            init_time           = 12
+            init_time           = 12,
+            flush_data          = 13
+
         };
     };
 }; // namespace G2_1

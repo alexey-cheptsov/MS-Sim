@@ -52,7 +52,9 @@ namespace G3_1 {
             save                = 21,
             stop                = 22,
             id                  = 23,
-            init_time           = 24
+            init_time           = 24,
+            flush_data          = 25
+
         };
     };
 }; // namespace G3_1

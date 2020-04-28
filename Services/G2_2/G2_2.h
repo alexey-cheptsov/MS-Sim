@@ -568,6 +568,15 @@ namespace G2_2 {
             proxy_clear(Proxies_p::command_flow);
         }
 
+	virtual void command__flush_data() {
+	    add_proxy_value<int>(Proxies_qmt::command_flow, Commands_qmt::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_qmt::command_flow);
+            proxy_clear(Proxies_qmt::command_flow);
+            
+            add_proxy_value<int>(Proxies_p::command_flow, Commands_p::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_p::command_flow);
+            proxy_clear(Proxies_p::command_flow);
+        }
 	
 	void run() {
             bool finish = false;
@@ -678,6 +687,12 @@ namespace G2_2 {
                     // 16           
                     case Commands_Qmt::init_time: {
                         command__init_time();
+                        break;
+                    }
+                    
+                    // 17           
+                    case Commands_Qmt::flush_data: {
+                        command__flush_data();
                         break;
                     }
                 }

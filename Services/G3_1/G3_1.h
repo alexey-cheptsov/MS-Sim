@@ -985,6 +985,28 @@ namespace G3_1 {
             proxy_clear(Proxies_p::command_flow);        
         }
 
+	virtual void command__flush_data() {
+    		// OS
+	    add_proxy_value<int>(Proxies_OS::command_flow, Commands_Q::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_OS::command_flow);
+            proxy_clear(Proxies_OS::command_flow);
+        	// Streb
+            add_proxy_value<int>(Proxies_Streb::command_flow, Commands_Q::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_Streb::command_flow);
+            proxy_clear(Proxies_Streb::command_flow);
+        	// AM
+            add_proxy_value<int>(Proxies_AM::command_flow, Commands_Qm::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_AM::command_flow);
+            proxy_clear(Proxies_AM::command_flow);
+        	// VS
+            add_proxy_value<int>(Proxies_VS::command_flow, Commands_Qmt::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_VS::command_flow);
+            proxy_clear(Proxies_VS::command_flow);
+        	// P
+            add_proxy_value<int>(Proxies_p::command_flow, Commands_p::flush_data /*value*/);
+            proxy_flush_collective_replicate(Proxies_p::command_flow);
+            proxy_clear(Proxies_p::command_flow);        
+        }
 	
 	void run() {
             bool finish = false;
@@ -1118,6 +1140,12 @@ namespace G3_1 {
                     // 24           
                     case Commands_QQmt::init_time: {
                         command__init_time();
+                        break;
+                    }
+
+                    // 25
+                    case Commands_QQmt::flush_data: {
+                        command__flush_data();
                         break;
                     }
                 }

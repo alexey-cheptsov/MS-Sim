@@ -26,7 +26,9 @@ namespace G1_1 {
             save                = 7,
             stop                = 8,
             id                  = 9,
-            init_time		= 10
+            init_time		= 10,
+            flush_data          = 11
+
         };
     };
 

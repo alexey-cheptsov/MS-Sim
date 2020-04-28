@@ -500,6 +500,24 @@ public:
     	    else
     		time_ms_relative += solv_params.time_step;
     }
+
+    // performs 1 simulation step
+    void flush_data() {
+	add_proxy_value<int>(Ports_QQmt::command_flow, Commands_QQmt::flush_data/*value*/);
+        proxy_flush_collective_replicate(Ports_QQmt::command_flow);
+        proxy_clear(Ports_QQmt::command_flow);
+
+        add_proxy_value<int>(proxy_disp_p + Ports_p::command_flow, Commands_p::flush_data /*value*/);
+        proxy_flush_collective_replicate(proxy_disp_p + Ports_p::command_flow);
+        proxy_clear(proxy_disp_p + Ports_p::command_flow);
+        
+	// Calculation of the current simulation time        
+	for (int i=0; i<solv_params.nr_num_steps; i++)
+    	    if (mon_opts->flag_is_realtime)
+        	time_ms.increment_time_ms(solv_params.time_step);
+    	    else
+    		time_ms_relative += solv_params.time_step;
+    }
     
     // initiates saving results by all ms
     void save() {
@@ -615,9 +633,9 @@ public:
 	if (mon_opts->flag_is_realtime)
     	    cout << time_ms.time_stamp() << endl;
     	else
-    	    cout << time_ms_relative << endl;
-    	    
-    	    	
+    	    cout << time_ms_relative << endl;    
+    	
+    	flush_data();    	
 	cout << "Now sleeping for 20 minutes: ";
     	this_thread::sleep_for(chrono::minutes(20));
     	

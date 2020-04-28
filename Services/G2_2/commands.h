@@ -33,7 +33,8 @@ namespace G2_2 {
             save                = 13,
             stop                = 14,
             id                  = 15,
-            init_time           = 16
+            init_time           = 16,
+            flush_data          = 17
         };
     };
 }; // namespace G2_2

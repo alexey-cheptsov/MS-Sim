@@ -364,6 +364,12 @@ namespace G1_1 {
                     air->time_ms_relative = 0;
 	}
 	
+	virtual void command__flush_data() {
+            if (monitoring != nullptr)
+                monitoring->data_flush();
+        }
+
+	
 	void run() {
 	    init_monitoring();
 	
@@ -437,6 +443,13 @@ namespace G1_1 {
     			command__init_time();
     			break;
 		    }    
+		    
+		    // 10
+                    case Commands_qm::flush_data: {
+                        command__flush_data();
+                        break;
+                    }
+
 		}
 	    }
 	}

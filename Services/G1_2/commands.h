@@ -31,7 +31,8 @@ namespace G1_2 {
             save                = 11,
             stop                = 12,
             id                  = 13,
-            init_time		= 14
+            init_time		= 14,
+            flush_data          = 15
         };
     };
 

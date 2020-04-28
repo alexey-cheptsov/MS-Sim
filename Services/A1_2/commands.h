@@ -22,7 +22,9 @@ namespace A1_2 {
             save                = 3,
             stop                = 4,
             id			= 5,
-            init_time		= 6
+            init_time		= 6,
+            flush_data		= 7
+            
         };
     };
 

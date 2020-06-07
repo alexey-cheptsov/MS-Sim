@@ -557,6 +557,8 @@ public:
 
 	float P[2];
 
+	
+
         // Setting initial values of P and Q
         P[0] = H_end;
         P[1] = 0;
@@ -607,7 +609,8 @@ public:
 	init_time();
 
 	// Simulation
-	while ( !is_converged ) {
+	for (int i=0; i<3; i++) {
+	//while ( !is_converged ) {
     	    cout << "============== Iteration " << num_step << "==============" << endl;
     	    
     	    simulation_step();
@@ -636,14 +639,15 @@ public:
     	    cout << time_ms_relative << endl;    
     	
     	flush_data();    	
-	cout << "Now sleeping for 20 minutes: ";
-    	this_thread::sleep_for(chrono::minutes(20));
+	cout << "Now sleeping for 1 minutes... " << endl; // 20
+    	this_thread::sleep_for(chrono::minutes(1)); // 20
     	
-    	int nr_of_additional_minutes = 30;
+    	int nr_of_additional_minutes = 3; // 30
     	
     	// Simulation for another nr_of_minutes
     	num_step = 0;
-    	init_time();
+
+    	//init_time();
     	
     	while ( num_step < (nr_of_additional_minutes * 60 / (solv_params.nr_num_steps * solv_params.time_step)) ) {
 
@@ -811,15 +815,16 @@ int main (int argc, char* argv[]) {
     MPI_Bcast(experiment_id_char, 24, MPI_CHAR, 0, MPI_COMM_WORLD);
 
     string experiment_id(experiment_id_char);
-    
+
     Monitoring_opts* mon_opts = new Monitoring_opts();
-    mon_opts->experiment_id     = experiment_id;
-    mon_opts->flag_is_realtime  = 1;
-    mon_opts->flag_output_file  = 1;
-    mon_opts->flag_output_uri   = 1;
-    mon_opts->buf_size 		= 100;
+    mon_opts->experiment_id     	= experiment_id;
+    mon_opts->flag_is_realtime  	= 1;
+    mon_opts->flag_output_csv 		= 0;
+    mon_opts->flag_output_es 		= 1;
+    mon_opts->flag_output_es_via_files 	= 0;
+    mon_opts->buf_size 			= 100;
     
-    if ((mpi_rank == 0)&&(mon_opts->flag_output_uri)) {
+    if ((mpi_rank == 0)&&((mon_opts->flag_output_es)||(mon_opts->flag_output_es_via_files))) {
         Monitoring mon(mon_opts);
         mon.mapping();
     }

@@ -765,13 +765,14 @@ int main (int argc, char* argv[]) {
     string experiment_id(experiment_id_char);
     
     Monitoring_opts* mon_opts = new Monitoring_opts();
-    mon_opts->experiment_id     = experiment_id;
-    mon_opts->flag_is_realtime  = 1;
-    mon_opts->flag_output_file  = 1;
-    mon_opts->flag_output_uri   = 1;
-    mon_opts->buf_size 		= 100;
-    
-    if ((mpi_rank == 0)&&(mon_opts->flag_output_uri)) {
+    mon_opts->experiment_id             = experiment_id;
+    mon_opts->flag_is_realtime          = 0;
+    mon_opts->flag_output_csv           = 1;
+    mon_opts->flag_output_es            = 0;
+    mon_opts->flag_output_es_via_files  = 0;
+    mon_opts->buf_size                  = 100;
+
+    if ((mpi_rank == 0)&&((mon_opts->flag_output_es)||(mon_opts->flag_output_es_via_files))) {
         Monitoring mon(mon_opts);
         mon.mapping();
     }

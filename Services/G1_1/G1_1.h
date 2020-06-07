@@ -136,8 +136,10 @@ namespace G1_1 {
     		
     		monitoring->ss.push_back(new stringstream());
     		monitoring->ss.push_back(new stringstream());
+		monitoring->ssu.push_back(new stringstream());
+    		monitoring->ssu.push_back(new stringstream());
     	    
-        	if (mon_opts->flag_output_file) {
+        	if ((mon_opts->flag_output_csv)||(mon_opts->flag_output_es_via_files)) {
         	    output.push_back(new fstream());            // file for "q"
             	    output[0]->open("output/" + air->id_str + ".csv", ios::out|ios::in|ios::trunc);
             	    *output[0] << "ExperimentID;Network;Section;Element;Approximation;@timestamp;value" << endl;
@@ -339,7 +341,7 @@ namespace G1_1 {
 	    if (monitoring != nullptr) {
 		monitoring->data_flush();
 	    
-		if (mon_opts->flag_output_file)
+		if ((mon_opts->flag_output_csv)||(mon_opts->flag_output_es_via_files))
 		    for (int i=0; i<output.size(); i++)
                         output[i]->close();
 	    }

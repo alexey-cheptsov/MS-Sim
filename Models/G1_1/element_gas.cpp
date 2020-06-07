@@ -345,44 +345,6 @@ public:
     }
 
 
-    // sets output files
-    void setup_fout(fstream& foutH, fstream& foutQ, fstream& foutP, int N, float H_start) {
-        foutH.open("output/H.csv", ios::out);
-        foutH << "t;H" << endl << "0;" << H_start << endl;
-     
-
-        foutQ.open("output/Q.csv", ios::out);
-        foutQ << "t";
-        for (int i=0; i<N; i++)
-            foutQ << ";" << "q" << i;
-        foutQ << endl;
-
-        foutP.open("output/P.csv", ios::out);
-        foutP << "t";
-        for (int i=0; i<N+1; i++)
-	    foutP << ";" << "P" << i;
-	foutP << endl;
-    }
-
-    // output of Q and P into files
-    void fout(fstream& foutH, fstream& foutQ, fstream& foutP, int N,
-    	float H, float* Q, float* P,
-	float time) 
-    {
-        foutQ << time;
-        for (int i=0; i<N; i++)
-	    foutQ << ";" << Q[i];
-	foutQ << endl;
-    
-	foutP << time;
-	for (int i=0; i<N+1; i++)
-	    foutP << ";" << P[i];
-	foutP << endl;
-
-	foutH << time << ";" << H << endl;
-    }
-    
-
     // inits time stamp for all ms
     void init_time() {
         add_proxy_value(Ports_qm::command_flow, Commands_qm::init_time/*value*/);
@@ -444,12 +406,6 @@ public:
         set_Qm(qm);
         set_Qm0(qm);
         
-        // Preparation for results output
-        fstream foutH;
-        fstream foutQ;
-        fstream foutP;
-	setup_fout(foutH, foutQ, foutP, n, H_start);
-
 	bool is_converged = false;
 	int num_step = 0;
 
@@ -478,11 +434,6 @@ public:
 
             float store_interval = 0.5;
 	    float cur_mod_time = solv_params.nr_num_steps * num_step * solv_params.time_step;
-
-	    //if (cur_mod_time/store_interval - round(cur_mod_time/store_interval)==0)
-    	    //fout(foutH, foutQ, foutP, n,
-            //    H_end, q, p,
-            //    cur_mod_time);
 
     	    is_converged = true;
    	    for (int i=0; i<n; i++) {
@@ -599,7 +550,7 @@ int main (int argc, char* argv[]) {
     
     Monitoring_opts* mon_opts = new Monitoring_opts();
     mon_opts->experiment_id             = experiment_id;
-    mon_opts->flag_is_realtime          = 0;
+    mon_opts->flag_is_realtime          = 1;
     mon_opts->flag_output_csv           = 1;
     mon_opts->flag_output_es            = 0;
     mon_opts->flag_output_es_via_files  = 0;

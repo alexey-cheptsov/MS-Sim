@@ -63,7 +63,7 @@ public:
     #define FAILED 1
     
     // enables (1) or deprecates (0) debug output from curl
-    #define CURL_DEBUG_ON 0
+    #define CURL_DEBUG_ON 1
 
     #define headercode_char_size 11
 
@@ -105,17 +105,19 @@ public:
 
     Monitoring(Monitoring_opts* mon_opts_) {
 	mon_opts = mon_opts_;
-    
+	
+	// Checking of flags conflicts
+	if (mon_opts->flag_output_es && mon_opts->flag_output_es_via_files) {
+	    cout << "Warning: Monitoring flags conflict!" << endl;
+	    mon_opts->flag_output_es_via_files = 0;
+	}
+	    
 	// FOR EXAMPLE: if ((mon_opts_->flag_output_file) && (mon_opts_->flag_output_file)) 
-	if (((mon_opts_->flag_output_es)&&(mon_opts_->flag_output_es_via_files))||   					  	     ((mon_opts_->flag_output_csv)&&(mon_opts_->flag_output_es_via_files)))
+	if (mon_opts_->flag_output_es && mon_opts_->flag_output_es_via_files)
 		mon_opts_->flag_output_es_via_files = 0;
-
-	if ((mon_opts_->flag_output_csv)&&(mon_opts_->flag_output_es_via_files)&&(mon_opts_->flag_output_es))
-		mon_opts_->flag_output_es_via_files = 0;
-
 
 	experiment_id = mon_opts_->experiment_id;
-	if ((mon_opts_->flag_output_es)||(mon_opts_->flag_output_es_via_files)){
+	if (mon_opts_->flag_output_es || mon_opts_->flag_output_es_via_files) {
 
 		char* index_s = "ms";
 		char* bulk_s = "/_bulk?pretty";
@@ -383,12 +385,7 @@ public:
     {
 	filenr = entries.size();
 	for (int i=0; i<entries.size(); i++) {
-	    
-	    if (mon_opts->flag_output_csv){
-                    *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
-                       << elem << "\";\"" << entries[i].id << "\";\"" << timestamp << "\";"  << entries[i].value << endl;
 
-            }
             if (mon_opts->flag_output_es){
                     *ssu[i] << "{\"index\":{\"_index\":\"" << index << "\",\"_type\":\"_doc\"} }" << endl;
                     *ssu[i] << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
@@ -396,39 +393,39 @@ public:
                        << elem << "\",\"Approximation\":\"" << entries[i].id
                        << "\",\"@timestamp\":\"" << timestamp << "\",\"value\":" << entries[i].value << "}" << endl;
             }
-	    if (mon_opts->flag_output_es_via_files){
-		     *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
-                       << elem << "\";\"" << entries[i].id << "\";\"" << timestamp << "\";"  << entries[i].value << endl;
+	    if ((mon_opts->flag_output_es_via_files)||(mon_opts->flag_output_csv)){
+
+		 *ss[i] << "\"" << experiment_id << "\";\"" << net << "\";\""<< sec << "\";\""
+                 << elem << "\";\"" << entries[i].id << "\";\"" << timestamp << "\";"  << entries[i].value << endl;
+
+		 if (mon_opts->flag_output_es_via_files){
 
                     *ssu[i] << "{\"index\":{\"_index\":\"" << index << "\",\"_type\":\"_doc\"} }" << endl;
                     *ssu[i] << "{\"ExperimentID\":\"" << experiment_id << "\",\"Network\":\""
                        << net << "\",\"Section\":\"" << sec << "\",\"Element\":\""
                        << elem << "\",\"Approximation\":\"" << entries[i].id
                        << "\",\"@timestamp\":\"" << timestamp << "\",\"value\":" << entries[i].value << "}" << endl;
-            }
+            	}
+	    }
         }
         
         counter++;
         if (counter == mon_opts->buf_size) {
+
 		for (int i=0; i<entries.size(); i++){
-		      if (mon_opts->flag_output_csv){
-			    //cout << "add ss is:" << ss[i]->str() << endl;
-		            *fout[i] << ss[i]->str();
-			    fout[i]->flush();
-		     }
 		      if (mon_opts->flag_output_es){      
-			    //cout << "add ss is:" << ss[i]->str() << endl;
 		            char json_msg[ssu[i]->str().length()+1];
 			    strcpy (json_msg, ssu[i]->str().c_str());
 			    publish_json(bulk, json_msg);
 		     }
-		      if (mon_opts->flag_output_es_via_files){
-			    //cout << "add ss is:" << ssu[i]->str() << endl;
+		      if ((mon_opts->flag_output_es_via_files)||(mon_opts->flag_output_csv)){
 		            *fout[i] << ss[i]->str();
 			    fout[i]->flush();
-			    char json_msg[ssu[i]->str().length()+1];
-			    strcpy (json_msg, ssu[i]->str().c_str());
-			    publish_json(bulk, json_msg);
+			    if (mon_opts->flag_output_es_via_files){
+			        char json_msg[ssu[i]->str().length()+1];
+			        strcpy (json_msg, ssu[i]->str().c_str());
+			        publish_json(bulk, json_msg);
+			}
 		     }
 	    	     ss[i]->str("");
 		     ssu[i]->str("");
@@ -436,6 +433,7 @@ public:
 		}
 	}	
     }
+    
     
     template<typename T>
     void add_entry(string net, string sec, string elem, float timestamp, vector<Entry_to_save<T>>& entries)
@@ -454,20 +452,17 @@ public:
 			      	publish_json(bulk, json_msg);
 		    }	
 		} 		
-		 if (mon_opts->flag_output_csv){
-			    //cout << "flush ss is:" << ss[i]->str() << endl;
-		            *fout[i] << ss[i]->str() << "";
-			    fout[i]->flush();
-		} 
-		 if (mon_opts->flag_output_es_via_files){
+
+		  if ((mon_opts->flag_output_es_via_files)||(mon_opts->flag_output_csv)){			
 		            *fout[i] << ss[i]->str();
 			    fout[i]->flush();
-			    if (counter != 0){
-			    	//cout << "flush ss is:" << ssu[i]->str() << endl;
-			    	char json_msg[ssu[i]->str().length()+1];						
-			    	strcpy (json_msg, ssu[i]->str().c_str());
-			    	publish_json(bulk, json_msg);
-		    	    }	
+			    if (mon_opts->flag_output_es_via_files){
+			    	if (counter != 0){
+			    	    char json_msg[ssu[i]->str().length()+1];						
+			    	    strcpy (json_msg, ssu[i]->str().c_str());
+			    	    publish_json(bulk, json_msg);
+		    	        }
+			    }	
 		} 
 	ss[i]->str("");
 	ssu[i]->str("");
